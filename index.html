@@ -1,0 +1,1355 @@
+<!DOCTYPE html>
+<html lang="km">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ផែនការយុទ្ធសាស្ត្រអភិវឌ្ឍន៍ឃុំ-សង្កាត់ - ខេត្តសៀមរាប</title>
+    <!-- Tailwind CSS for modern styled UI -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome for professional layout icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Chart.js for data visualization -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- SheetJS for reading the Excel file (ProvTableByDistrict_K_17_2025.xlsx) -->
+    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+    <!-- Google Fonts for professional Khmer Typography -->
+    <link href="https://fonts.googleapis.com/css2?family=Kantumruy+Pro:ital,wght@0,300;0,400;0,600;0,700;1,400&family=Moul&family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
+
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        khmer: ['"Kantumruy Pro"', 'sans-serif'],
+                        moul: ['"Moul"', 'serif'],
+                        sans: ['"Inter"', 'sans-serif']
+                    },
+                    colors: {
+                        temple: {
+                            50: '#f4f7f6',
+                            100: '#e5eee9',
+                            500: '#1e4620', // Forest Green
+                            800: '#0c2411',
+                        },
+                        royal: {
+                            50: '#f0f5fa',
+                            500: '#0f4c81', // Angkor/Royal Blue
+                            600: '#0b3961',
+                            800: '#051b30',
+                        },
+                        gold: {
+                            500: '#d4af37', // Gold highlights
+                            600: '#b89225',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body {
+            font-family: 'Kantumruy Pro', sans-serif;
+            background-color: #f8fafc;
+        }
+        .header-moul {
+            font-family: 'Moul', serif;
+            letter-spacing: 0.05em;
+        }
+        /* Custom scrollbar for beautiful dashboard panels */
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #f1f5f9;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8;
+        }
+    </style>
+</head>
+<body class="text-slate-800 antialiased min-h-screen flex flex-col">
+
+    <header class="bg-gradient-to-r from-royal-800 via-royal-600 to-temple-800 text-white shadow-xl border-b-4 border-gold-500 sticky top-0 z-40">
+        <div class="max-w-7xl mx-auto px-4 py-3 sm:px-6 lg:px-8 flex flex-col md:flex-row justify-between items-center gap-4">
+            <div class="flex items-center gap-3">
+                <div class="bg-white/10 p-2 rounded-lg border border-white/20">
+                    <!-- SVG Angkor Wat Icon -->
+                    <svg class="w-10 h-10 text-gold-500 fill-current" viewBox="0 0 24 24">
+                        <path d="M2,18H22V19H2M12,5.5L14,9H10L12,5.5M19,10.5L21,14H17L19,10.5M5,10.5L7,14H3L5,10.5M12,9L13.5,12H10.5L12,9M12,12.5L13,14H11L12,12.5M6,15H18V17H6V15Z" />
+                    </svg>
+                </div>
+                <div>
+                    <h1 class="header-moul text-lg sm:text-xl text-gold-500">រដ្ឋបាលខេត្តសៀមរាប</h1>
+                    <p class="text-xs sm:text-sm font-semibold tracking-wider text-slate-200">ប្រព័ន្ធគ្រប់គ្រង និងតាមដានផែនការយុទ្ធសាស្ត្រអភិវឌ្ឍន៍ឃុំ-សង្កាត់</p>
+                </div>
+            </div>
+            <div class="flex items-center gap-3">
+                <span class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
+                    <span class="w-2 h-2 bg-emerald-400 rounded-full animate-pulse"></span>
+                    ប្រព័ន្ធដំណើរការធម្មតា
+                </span>
+                <div class="text-right hidden xl:block text-xs text-slate-300">
+                    <div>ឯកសារយោង៖ ProvTableByDistrict_K_17_2025.xlsx</div>
+                    <div>កាលបរិច្ឆេទធ្វើបច្ចុប្បន្នភាព៖ ឆ្នាំ២០២៦</div>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <main class="flex-1 max-w-7xl w-full mx-auto px-4 py-6 sm:px-6 lg:px-8 flex flex-col lg:flex-row gap-6">
+        <!-- Left Sidebar - Navigation of Book/Report Pages -->
+        <aside class="w-full lg:w-80 shrink-0 flex flex-col gap-4">
+            <div class="bg-white rounded-2xl shadow-sm border border-slate-200/80 p-4">
+                <div class="flex items-center gap-2 pb-3 mb-3 border-b border-slate-100">
+                    <i class="fa-solid fa-book-open text-royal-500"></i>
+                    <h3 class="font-bold text-slate-900">ទំព័រមាតិការបាយការណ៍</h3>
+                </div>
+                <nav class="space-y-1.5 max-h-[420px] lg:max-h-none overflow-y-auto" id="report-nav">
+                    <!-- Nav items generated dynamically -->
+                </nav>
+            </div>
+
+            <div class="bg-white rounded-2xl shadow-sm border border-slate-200/80 p-4">
+                <div class="flex items-center justify-between pb-3 mb-3 border-b border-slate-100">
+                    <div class="flex items-center gap-2">
+                        <i class="fa-solid fa-file-excel text-emerald-600"></i>
+                        <h3 class="font-bold text-slate-900 text-sm">ឯកសារទិន្នន័យ (Excel)</h3>
+                    </div>
+                    <span id="excel-status" class="text-xs font-semibold px-2.5 py-0.5 rounded-full bg-blue-50 text-blue-600 border border-blue-100">
+                        Default Data Active
+                    </span>
+                </div>
+                
+                <p class="text-xs text-slate-500 mb-4 leading-relaxed">
+                    ប្រព័ន្ធបានផ្ទុកទិន្នន័យគំរូផ្លូវការរបស់ខេត្តសៀមរាប។ អ្នកអាចបញ្ចូលឯកសារពិតប្រាកដ <span class="font-mono bg-slate-100 px-1 rounded font-bold text-slate-700">ProvTableByDistrict_K_17_2025.xlsx</span> ដើម្បីធ្វើបច្ចុប្បន្នភាពទិន្នន័យភ្លាមៗ។
+                </p>
+
+                <!-- File drop area -->
+                <div class="border-2 border-dashed border-slate-300 rounded-xl p-4 text-center hover:bg-slate-50 transition cursor-pointer relative" id="drop-zone">
+                    <input type="file" id="excel-upload" class="absolute inset-0 opacity-0 cursor-pointer" accept=".xlsx, .xls">
+                    <i class="fa-solid fa-cloud-arrow-up text-slate-400 text-2xl mb-1.5"></i>
+                    <p class="text-xs font-semibold text-slate-700">អូសទាញ ឬជ្រើសរើសឯកសារ</p>
+                    <p class="text-[10px] text-slate-400 mt-1">គាំទ្រតែឯកសារប្រភេទ .xlsx / .xls ប៉ុណ្ណោះ</p>
+                </div>
+                <div class="mt-3 flex justify-between items-center">
+                    <button id="btn-reset-data" class="text-xs text-rose-500 hover:text-rose-700 font-semibold flex items-center gap-1 transition">
+                        <i class="fa-solid fa-arrow-rotate-left"></i> កំណត់ទិន្នន័យឡើងវិញ
+                    </button>
+                    <button id="btn-view-excel" class="text-xs text-royal-500 hover:text-royal-700 font-semibold flex items-center gap-1 transition">
+                        <i class="fa-solid fa-table"></i> មើលទិន្នន័យលម្អិត
+                    </button>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Right Content Area - Interactive Document Viewer -->
+        <section class="flex-1 flex flex-col gap-6">
+            <!-- Global Export Actions -->
+            <div class="bg-white rounded-2xl shadow-sm border border-slate-200/80 p-4 flex flex-col sm:flex-row justify-between items-center gap-4">
+                <div class="flex items-center gap-2">
+                    <div class="w-2.5 h-2.5 rounded-full bg-gold-500"></div>
+                    <p class="text-sm font-semibold text-slate-700">របាយការណ៍បច្ចុប្បន្ន៖ <span id="current-page-title-label" class="text-royal-500">គម្របសៀវភៅ</span></p>
+                </div>
+                <div class="flex flex-wrap gap-2 w-full sm:w-auto">
+                    <button onclick="exportCurrentPageToWord()" class="flex-1 sm:flex-none inline-flex items-center justify-center gap-2 px-4 py-2 bg-royal-500 hover:bg-royal-600 text-white text-xs font-bold rounded-xl shadow-sm hover:shadow-md transition active:scale-95">
+                        <i class="fa-solid fa-file-word"></i> ទាញយកទំព័រនេះ (Word)
+                    </button>
+                    <button onclick="exportFullDocumentToWord()" class="flex-1 sm:flex-none inline-flex items-center justify-center gap-2 px-4 py-2 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white text-xs font-bold rounded-xl shadow-md hover:shadow-lg transition active:scale-95">
+                        <i class="fa-solid fa-file-export"></i> ទាញយករបាយការណ៍ពេញ (Word)
+                    </button>
+                </div>
+            </div>
+
+            <!-- Main Document Canvas -->
+            <div class="bg-white rounded-3xl shadow-sm border border-slate-200/80 p-6 md:p-8 lg:p-10 min-h-[600px] flex flex-col justify-between" id="document-canvas">
+                <!-- Page Content is dynamically injected here -->
+                <div id="canvas-content" class="prose max-w-none">
+                    <!-- Loading skeleton -->
+                    <div class="animate-pulse space-y-4">
+                        <div class="h-6 bg-slate-200 rounded w-1/3 mx-auto"></div>
+                        <div class="h-4 bg-slate-200 rounded w-1/4 mx-auto"></div>
+                        <div class="space-y-2 pt-6">
+                            <div class="h-4 bg-slate-200 rounded"></div>
+                            <div class="h-4 bg-slate-200 rounded w-5/6"></div>
+                            <div class="h-4 bg-slate-200 rounded w-4/5"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Footer Navigation within Canvas -->
+                <div class="mt-12 pt-6 border-t border-slate-100 flex justify-between items-center">
+                    <button id="btn-prev-page" class="inline-flex items-center gap-1.5 px-4 py-2 text-xs font-semibold text-slate-600 bg-slate-100 hover:bg-slate-200 rounded-xl transition disabled:opacity-50 disabled:cursor-not-allowed">
+                        <i class="fa-solid fa-chevron-left"></i> ទំព័រមុន
+                    </button>
+                    <span id="page-counter" class="text-xs font-bold text-slate-500">ទំព័រ ១ / ៧</span>
+                    <button id="btn-next-page" class="inline-flex items-center gap-1.5 px-4 py-2 text-xs font-semibold text-slate-600 bg-slate-100 hover:bg-slate-200 rounded-xl transition disabled:opacity-50 disabled:cursor-not-allowed">
+                        ទំព័របន្ទាប់ <i class="fa-solid fa-chevron-right"></i>
+                    </button>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- Modal for Detailed Data View -->
+    <div id="data-modal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+        <div class="bg-white rounded-3xl shadow-2xl max-w-4xl w-full max-h-[85vh] flex flex-col overflow-hidden border border-slate-100">
+            <div class="p-6 border-b border-slate-100 bg-slate-50 flex justify-between items-center">
+                <div class="flex items-center gap-2">
+                    <div class="bg-emerald-100 p-2 rounded-lg">
+                        <i class="fa-solid fa-table-list text-emerald-600 text-lg"></i>
+                    </div>
+                    <div>
+                        <h3 class="font-bold text-slate-900">ទិន្នន័យតាមបណ្តាស្រុក-ក្រុង ក្នុងខេត្តសៀមរាប</h3>
+                        <p class="text-xs text-slate-500">យោងតាមឯកសារ <span class="font-mono text-emerald-600 font-bold">ProvTableByDistrict_K_17_2025.xlsx</span></p>
+                    </div>
+                </div>
+                <button id="btn-close-modal" class="text-slate-400 hover:text-slate-600 hover:bg-slate-100 p-2 rounded-full transition">
+                    <i class="fa-solid fa-xmark text-lg"></i>
+                </button>
+            </div>
+            <div class="p-6 overflow-y-auto flex-1">
+                <div class="overflow-x-auto border border-slate-200 rounded-2xl">
+                    <table class="min-w-full divide-y divide-slate-200" id="districts-table">
+                        <thead class="bg-slate-50">
+                            <tr>
+                                <th class="px-4 py-3 text-left text-xs font-bold text-slate-600 tracking-wider">លេខកូដ</th>
+                                <th class="px-4 py-3 text-left text-xs font-bold text-slate-600 tracking-wider">ស្រុក-ក្រុង</th>
+                                <th class="px-4 py-3 text-left text-xs font-bold text-slate-600 tracking-wider">ចំនួនឃុំ-សង្កាត់</th>
+                                <th class="px-4 py-3 text-right text-xs font-bold text-slate-600 tracking-wider">ចំនួនប្រជាជន (នាក់)</th>
+                                <th class="px-4 py-3 text-right text-xs font-bold text-slate-600 tracking-wider">អត្រាភាពក្រីក្រ (%)</th>
+                                <th class="px-4 py-3 text-left text-xs font-bold text-slate-600 tracking-wider">វិស័យចម្បង</th>
+                            </tr>
+                        </thead>
+                        <tbody class="bg-white divide-y divide-slate-100 text-slate-700 text-sm" id="districts-table-body">
+                            <!-- Dynamic populated district rows -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            <div class="p-4 bg-slate-50 border-t border-slate-100 flex justify-end gap-2">
+                <button id="btn-close-modal-footer" class="px-4 py-2 bg-slate-200 hover:bg-slate-300 text-slate-700 text-xs font-bold rounded-xl transition">
+                    បិទត្រឡប់ទៅវិញ
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Default Official Statistics Mocking "ProvTableByDistrict_K_17_2025.xlsx"
+        const defaultSiemReapData = [
+            { code: "1710", districtKh: "ក្រុងសៀមរាប", communes: 12, population: 245386, povertyRate: 4.2, mainSector: "ទេសចរណ៍ និងសេវាកម្ម" },
+            { code: "1709", districtKh: "ស្រុកប្រាសាទបាគង", communes: 9, population: 112450, povertyRate: 12.5, mainSector: "កសិកម្ម និងទេសចរណ៍វប្បធម៌" },
+            { code: "1703", districtKh: "ស្រុកបន្ទាយស្រី", communes: 6, population: 65420, povertyRate: 15.8, mainSector: "កសិកម្ម និងអេកូទេសចរណ៍" },
+            { code: "1711", districtKh: "ស្រុកសូទ្រនិគម", communes: 10, population: 124800, povertyRate: 14.1, mainSector: "កសិកម្ម និងនេសាទ" },
+            { code: "1707", districtKh: "ស្រុកពួក", communes: 14, population: 142150, povertyRate: 16.5, mainSector: "កសិកម្ម និងសិប្បកម្មត្បាញសូត្រ" },
+            { code: "1704", districtKh: "ស្រុកជីក្រែង", communes: 12, population: 154200, povertyRate: 18.2, mainSector: "កសិកម្ម និងវារីវប្បកម្ម" },
+            { code: "1702", districtKh: "ស្រុកអង្គរធំ", communes: 4, population: 32180, povertyRate: 22.1, mainSector: "កសិកម្ម និងផលអនុផលព្រៃឈើ" },
+            { code: "1701", districtKh: "ស្រុកអង្គរជុំ", communes: 7, population: 64800, povertyRate: 23.5, mainSector: "កសិកម្ម និងដំណាំចម្ការ" },
+            { code: "1713", districtKh: "ស្រុកស្វាយលើ", communes: 5, population: 42500, povertyRate: 28.4, mainSector: "កសិកម្ម និងកសិ-ឧស្សាហកម្ម" },
+            { code: "1712", districtKh: "ស្រុកស្រីស្នំ", communes: 6, population: 48600, povertyRate: 24.1, mainSector: "កសិកម្ម និងចិញ្ចឹមសត្វ" },
+            { code: "1706", districtKh: "ស្រុកក្រឡាញ់", communes: 10, population: 72900, povertyRate: 19.5, mainSector: "កសិកម្ម និងពាណិជ្ជកម្មមូលដ្ឋាន" },
+            { code: "1714", districtKh: "ស្រុកវ៉ារិន", communes: 5, population: 38700, povertyRate: 26.8, mainSector: "កសិកម្ម និងចម្ការកៅស៊ូ" }
+        ];
+
+        let currentActiveData = JSON.parse(JSON.stringify(defaultSiemReapData));
+        let currentPageIndex = 0;
+
+        // Structured Report Book/Chapters Design
+        const reportBook = [
+            {
+                id: "cover",
+                title: "ទំព័រក្របសៀវភៅ",
+                icon: "fa-solid fa-file-contract",
+                render: () => `
+                    <div class="text-center py-8 flex flex-col items-center justify-between min-h-[480px]">
+                        <div class="space-y-4">
+                            <h2 class="header-moul text-xl md:text-2xl text-royal-600 leading-relaxed">ព្រះរាជាណាចក្រកម្ពុជា</h2>
+                            <h3 class="header-moul text-lg md:text-xl text-royal-600">ជាតិ សាសនា ព្រះមហាក្សត្រ</h3>
+                            <div class="flex justify-center items-center gap-1.5 my-2">
+                                <span class="w-1.5 h-1.5 bg-royal-600 rounded-full"></span>
+                                <span class="w-1.5 h-1.5 bg-royal-600 rounded-full"></span>
+                                <span class="w-12 h-0.5 bg-royal-600"></span>
+                                <span class="w-1.5 h-1.5 bg-royal-600 rounded-full"></span>
+                                <span class="w-1.5 h-1.5 bg-royal-600 rounded-full"></span>
+                            </div>
+                        </div>
+
+                        <div class="my-10 space-y-6">
+                            <div class="mx-auto w-24 h-24 bg-gold-50 flex items-center justify-center rounded-full border-2 border-gold-500 shadow-md">
+                                <svg class="w-14 h-14 text-gold-600 fill-current" viewBox="0 0 24 24">
+                                    <path d="M12,2A10,10 0 0,0 2,12A10,10 0 0,0 12,22A10,10 0 0,0 22,12A10,10 0 0,0 12,2M12,4A8,8 0 0,1 20,12A8,8 0 0,1 12,20A8,8 0 0,1 4,12A8,8 0 0,1 12,4M12,6L8.5,11H15.5L12,6M12,11L9.5,14.5H14.5L12,11M11,15V17H13V15H11Z" />
+                                </svg>
+                            </div>
+                            <h1 class="header-moul text-2xl md:text-3xl lg:text-4xl text-royal-800 leading-relaxed max-w-2xl mx-auto">
+                                ផែនការយុទ្ធសាស្ត្រអភិវឌ្ឍន៍ឃុំ-សង្កាត់<br><span class="text-gold-600">ខេត្តសៀមរាប</span>
+                            </h1>
+                            <p class="text-sm font-semibold tracking-widest text-slate-500 uppercase">Commune-Sangkat Strategic Development Plan (2026-2030)</p>
+                        </div>
+
+                        <div class="mt-8 pt-8 border-t border-slate-100 w-full max-w-md">
+                            <p class="font-bold text-slate-700 text-base">រៀបចំដោយ៖ រដ្ឋបាលខេត្តសៀមរាប</p>
+                            <p class="text-xs text-slate-500 mt-1">គាំទ្របច្ចេកទេស និងទិន្នន័យ៖ ក្រសួងផែនការ និងដៃគូអភិវឌ្ឍន៍ជាតិ</p>
+                        </div>
+                    </div>
+                `
+            },
+            {
+                id: "intro",
+                title: "១. សេចក្តីផ្តើម និងគោលបំណង",
+                icon: "fa-solid fa-circle-info",
+                render: () => `
+                    <div class="space-y-6">
+                        <div class="border-b border-slate-100 pb-4">
+                            <span class="text-xs font-bold text-gold-600 uppercase tracking-wider">ជំពូកទី ១</span>
+                            <h2 class="header-moul text-xl text-royal-800 mt-1">សេចក្តីផ្តើម និងគោលបំណងយុទ្ធសាស្ត្រ</h2>
+                        </div>
+                        
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 items-center">
+                            <div class="space-y-4 text-justify text-slate-600 leading-relaxed text-sm">
+                                <p>
+                                    ផែនការយុទ្ធសាស្ត្រអភិវឌ្ឍន៍ឃុំ-សង្កាត់ ក្នុងខេត្តសៀមរាប គឺជាផែនទីចង្អុលផ្លូវមួយយ៉ាងសំខាន់ក្នុងការជំរុញការអភិវឌ្ឍតាមបែបប្រជាធិបតេយ្យនៅថ្នាក់ក្រោមជាតិ។ គោលបំណងចម្បងនៃយុទ្ធសាស្ត្រនេះ គឺការបែងចែកធនធាន និងការអនុវត្តគម្រោងវិនិយោគឱ្យស្របទៅនឹងតម្រូវការជាក់ស្តែងរបស់ប្រជាពលរដ្ឋនៅតាមមូលដ្ឋាន។
+                                </p>
+                                <p>
+                                    តាមរយៈការវិភាគលើទិន្នន័យជាប្រព័ន្ធ ផែនការនេះផ្តោតជាសំខាន់ទៅលើការលើកកម្ពស់ជីវភាពរស់នៅ ការពង្រឹងគុណភាពអប់រំ សុខាភិបាល ការកសាងហេដ្ឋារចនាសម្ព័ន្ធជនបទ និងការថែរក្សាបេតិកភណ្ឌវប្បធម៌ និងបរិស្ថានប្រកបដោយចីរភាព។
+                                </p>
+                            </div>
+                            <div class="rounded-2xl overflow-hidden shadow-md border border-slate-100 relative group">
+                                <img src="https://images.unsplash.com/photo-1543783207-ec64e4d95325?auto=format&fit=crop&w=800&q=80" 
+                                     alt="Angkor Wat Community" 
+                                     class="w-full h-64 object-cover group-hover:scale-105 transition duration-500"
+                                     onerror="this.src='https://placehold.co/800x600/0f4c81/ffffff?text=Siem+Reap+Heritage'">
+                                <div class="absolute bottom-0 inset-x-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent p-4 text-white">
+                                    <p class="text-xs text-gold-500 font-bold">រូបភាពទី ១</p>
+                                    <p class="text-xs font-semibold">ប្រាសាទអង្គរវត្ត - និមិត្តរូបនៃអត្តសញ្ញាណ និងសក្តានុពលសេដ្ឋកិច្ចវប្បធម៌ខេត្តសៀមរាប</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Stakeholder Quote Box -->
+                        <div class="bg-royal-50 border-l-4 border-royal-500 p-5 rounded-r-2xl mt-6">
+                            <p class="italic text-slate-600 text-sm leading-relaxed">
+                                "ការកសាងសមត្ថភាពស្វ័យសម្រេចរបស់រដ្ឋបាលឃុំ-សង្កាត់ គឺជាគន្លឹះដ៏សំខាន់ក្នុងការកាត់បន្ថយភាពក្រីក្រ និងបង្កើតការអភិវឌ្ឍប្រកបដោយបរិយាបន្ន។ សហគមន៍ដែលរឹងមាំ គឺជាគ្រឹះនៃសន្តិភាព និងភាពរុងរឿងរបស់ជាតិទាំងមូល។"
+                            </p>
+                            <div class="mt-3 flex items-center gap-3">
+                                <div class="w-8 h-8 rounded-full bg-slate-200 flex items-center justify-center text-royal-500 font-bold text-xs border border-royal-200">
+                                    ឯ.ឧ
+                                </div>
+                                <div>
+                                    <h4 class="text-xs font-bold text-royal-800">ឯកឧត្តម ប្រាក់ សោភ័ណ</h4>
+                                    <p class="text-[10px] text-slate-500">អភិបាលនៃគណៈអភិបាលខេត្តសៀមរាប</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `
+            },
+            {
+                id: "demographics",
+                title: "២. ប្រវត្តិរូប និងប្រជាសាស្ត្រ",
+                icon: "fa-solid fa-users",
+                render: () => `
+                    <div class="space-y-6">
+                        <div class="border-b border-slate-100 pb-4">
+                            <span class="text-xs font-bold text-gold-600 uppercase tracking-wider">ជំពូកទី ២</span>
+                            <h2 class="header-moul text-xl text-royal-800 mt-1">ប្រវត្តិរូបប្រជាសាស្ត្រ និងសូចនាករសង្គម</h2>
+                        </div>
+
+                        <p class="text-slate-600 text-sm text-justify leading-relaxed">
+                            ខេត្តសៀមរាបត្រូវបានបែងចែកជា ១២ ក្រុង-ស្រុក និងមានឃុំ-សង្កាត់ចំនួន ១០០។ ការយល់ដឹងអំពីទំហំប្រជាសាស្ត្រ និងសូចនាករមូលដ្ឋាន មានសារៈសំខាន់ណាស់ក្នុងការរៀបចំថវិកា និងធនធានឱ្យចំគោលដៅ។ ក្រាហ្វិកខាងក្រោមបង្ហាញពីការប្រៀបធៀបចំនួនប្រជាជនរវាងបណ្តាក្រុង-ស្រុកនានាក្នុងខេត្ត៖
+                        </p>
+
+                        <!-- Canvas Holder for Chart with clean logic inside scripts -->
+                        <div class="bg-slate-50 p-4 rounded-2xl border border-slate-100">
+                            <h4 class="text-xs font-bold text-slate-700 text-center mb-4">តារាងប្រៀបធៀប៖ ចំនួនប្រជាជនតាមបណ្តាក្រុង-ស្រុក (ឆ្នាំ២០២៥)</h4>
+                            <div class="relative h-72 w-full">
+                                <canvas id="demographicsChart"></canvas>
+                            </div>
+                        </div>
+
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
+                            <div class="bg-emerald-50/50 border border-emerald-100 p-4 rounded-xl">
+                                <h4 class="font-bold text-emerald-800 mb-1 flex items-center gap-1">
+                                    <i class="fa-solid fa-circle-check"></i> តំបន់មានប្រជាជនច្រើនបំផុត
+                                </h4>
+                                <p class="text-slate-600">ក្រុងសៀមរាប និងស្រុកជីក្រែង គឺជាតំបន់ដែលមានដង់ស៊ីតេ និងចំនួនប្រជាជនខ្ពស់ជាងគេ ដែលទាមទារនូវការគាំទ្រផ្នែកហេដ្ឋារចនាសម្ព័ន្ធទីប្រជុំជន និងការគ្រប់គ្រងបរិស្ថានខ្លាំង។</p>
+                            </div>
+                            <div class="bg-amber-50/50 border border-amber-100 p-4 rounded-xl">
+                                <h4 class="font-bold text-amber-800 mb-1 flex items-center gap-1">
+                                    <i class="fa-solid fa-circle-exclamation"></i> តំបន់ដាច់ស្រយាល
+                                </h4>
+                                <p class="text-slate-600">ស្រុកអង្គរធំ និងស្រុកវ៉ារិន មានប្រជាជនតិច និងរស់នៅរប៉ាត់រប៉ាយ ដែលចាំបាច់ត្រូវផ្តោតលើការតភ្ជាប់បណ្តាញផ្លូវជនបទ និងសេវាសុខាភិបាលចល័ត។</p>
+                            </div>
+                        </div>
+                    </div>
+                `,
+                onLoad: () => {
+                    initDemographicsChart();
+                }
+            },
+            {
+                id: "poverty",
+                title: "៣. ការវិភាគសន្ទស្សន៍ភាពក្រីក្រ",
+                icon: "fa-solid fa-chart-line",
+                render: () => `
+                    <div class="space-y-6">
+                        <div class="border-b border-slate-100 pb-4">
+                            <span class="text-xs font-bold text-gold-600 uppercase tracking-wider">ជំពូកទី ៣</span>
+                            <h2 class="header-moul text-xl text-royal-800 mt-1">ការវិភាគស្ថានភាពភាពក្រីក្រតាមបណ្តាស្រុក</h2>
+                        </div>
+
+                        <p class="text-slate-600 text-sm text-justify leading-relaxed">
+                            ទោះបីជាខេត្តសៀមរាបជាមជ្ឈមណ្ឌលទេសចរណ៍លំដាប់អន្តរជាតិក៏ដោយ គម្លាតសេដ្ឋកិច្ចរវាងតំបន់ទីក្រុង និងតំបន់ជនបទដាច់ស្រយាលនៅតែមានទំហំធំធេងនៅឡើយ។ អត្រានៃភាពក្រីក្រមានភាពខុសប្លែកគ្នាគួរឱ្យកត់សម្គាល់៖
+                        </p>
+
+                        <!-- Canvas Holder for Poverty Chart -->
+                        <div class="bg-slate-50 p-4 rounded-2xl border border-slate-100">
+                            <h4 class="text-xs font-bold text-slate-700 text-center mb-4">តារាង៖ អត្រាភាពក្រីក្រតាមស្រុក-ក្រុងគិតជាភាគរយ (%)</h4>
+                            <div class="relative h-72 w-full">
+                                <canvas id="povertyChart"></canvas>
+                            </div>
+                        </div>
+
+                        <div class="bg-rose-50 border-l-4 border-rose-500 p-4 rounded-r-xl">
+                            <p class="text-xs font-semibold text-rose-800">ការសង្កេតសំខាន់៖</p>
+                            <p class="text-xs text-rose-700 mt-1">
+                                ស្រុកស្វាយលើ និងស្រុកវ៉ារិន មានអត្រាភាពក្រីក្រខ្ពស់ជាងគេបំផុត (លើសពី ២៥%)។ កត្តានេះបណ្តាលមកពីកង្វះការតភ្ជាប់ទីផ្សារ ភាពរាំងស្ងួតកសិកម្ម និងកម្រិតនៃការអប់រំមូលដ្ឋាននៅមានកម្រិតទាប។
+                            </p>
+                        </div>
+                    </div>
+                `,
+                onLoad: () => {
+                    initPovertyChart();
+                }
+            },
+            {
+                id: "swot",
+                title: "៤. ការវិភាគ SWOT",
+                icon: "fa-solid fa-rectangle-list",
+                render: () => `
+                    <div class="space-y-6">
+                        <div class="border-b border-slate-100 pb-4">
+                            <span class="text-xs font-bold text-gold-600 uppercase tracking-wider">ជំពូកទី ៤</span>
+                            <h2 class="header-moul text-xl text-royal-800 mt-1">ការវិភាគ SWOT សម្រាប់ការអភិវឌ្ឍឃុំ-សង្កាត់</h2>
+                        </div>
+
+                        <p class="text-slate-600 text-sm leading-relaxed text-justify">
+                            ការវិភាគលើ ចំណុចខ្លាំង ចំណុចខ្សោយ ឱកាស និងការគំរាមកំហែង (SWOT Analysis) ជួយឱ្យរដ្ឋបាលខេត្តសៀមរាបអាចរៀបចំគោលនយោបាយកម្រិតសហគមន៍ប្រកបដោយសមធម៌ និងប្រសិទ្ធភាព៖
+                        </p>
+
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <!-- Strengths -->
+                            <div class="bg-emerald-50/70 border border-emerald-100 rounded-2xl p-4">
+                                <h3 class="font-bold text-emerald-800 text-sm flex items-center gap-2 mb-2">
+                                    <i class="fa-solid fa-circle-plus"></i> ចំណុចខ្លាំង (Strengths)
+                                </h3>
+                                <ul class="list-disc pl-5 space-y-1 text-xs text-emerald-950 leading-relaxed">
+                                    <li>សក្តានុពលវប្បធម៌ និងទេសចរណ៍ប្រវត្តិសាស្ត្រលំដាប់ពិភពលោក។</li>
+                                    <li>មានធនធានទឹកធម្មជាតិដ៏ធំ (បឹងទន្លេសាប)។</li>
+                                    <li>រចនាសម្ព័ន្ធរដ្ឋបាលឃុំ-សង្កាត់មានការសហការល្អ។</li>
+                                </ul>
+                            </div>
+
+                            <!-- Weaknesses -->
+                            <div class="bg-rose-50/70 border border-rose-100 rounded-2xl p-4">
+                                <h3 class="font-bold text-rose-800 text-sm flex items-center gap-2 mb-2">
+                                    <i class="fa-solid fa-circle-minus"></i> ចំណុចខ្សោយ (Weaknesses)
+                                </h3>
+                                <ul class="list-disc pl-5 space-y-1 text-xs text-rose-950 leading-relaxed">
+                                    <li>ការកសាងសមត្ថភាពបច្ចេកវិទ្យានៅថ្នាក់មូលដ្ឋាននៅមានកម្រិត។</li>
+                                    <li>ភាពខុសគ្នានៃប្រាក់ចំណូលរវាងប្រជាជនក្រុង និងស្រុកជនបទដាច់ស្រយាល។</li>
+                                    <li>ប្រព័ន្ធស្រោចស្រពកសិកម្មមិនទាន់គ្របដណ្តប់គ្រប់គ្រាន់។</li>
+                                </ul>
+                            </div>
+
+                            <!-- Opportunities -->
+                            <div class="bg-blue-50/70 border border-blue-100 rounded-2xl p-4">
+                                <h3 class="font-bold text-blue-800 text-sm flex items-center gap-2 mb-2">
+                                    <i class="fa-solid fa-arrow-up-right-dots"></i> ឱកាស (Opportunities)
+                                </h3>
+                                <ul class="list-disc pl-5 space-y-1 text-xs text-blue-950 leading-relaxed">
+                                    <li>អាកាសយានដ្ឋានអន្តរជាតិសៀមរាបអង្គរថ្មី ជំរុញការវិនិយោគ។</li>
+                                    <li>ការកើនឡើងនៃនិន្នាការទេសចរណ៍ធម្មជាតិ និងកសិទេសចរណ៍។</li>
+                                    <li>មូលនិធិអភិវឌ្ឍន៍ឃុំ-សង្កាត់មានការកើនឡើងពីថ្នាក់ជាតិ។</li>
+                                </ul>
+                            </div>
+
+                            <!-- Threats -->
+                            <div class="bg-amber-50/70 border border-amber-100 rounded-2xl p-4">
+                                <h3 class="font-bold text-amber-800 text-sm flex items-center gap-2 mb-2">
+                                    <i class="fa-solid fa-triangle-exclamation"></i> ការគំរាមកំហែង (Threats)
+                                </h3>
+                                <ul class="list-disc pl-5 space-y-1 text-xs text-amber-950 leading-relaxed">
+                                    <li>បម្រែបម្រួលអាកាសធាតុ (គ្រោះរាំងស្ងួត និងទឹកជំនន់)។</li>
+                                    <li>ការប្រែប្រួលសេដ្ឋកិច្ចសកលដែលប៉ះពាល់ដល់វិស័យទេសចរណ៍។</li>
+                                    <li>ការធ្វើចំណាកស្រុករបស់កម្លាំងពលកម្មវ័យក្មេងចេញពីសហគមន៍។</li>
+                                </ul>
+                            </div>
+                        </div>
+
+                        <!-- Community Image -->
+                        <div class="rounded-2xl overflow-hidden shadow-sm border border-slate-100 relative group">
+                            <img src="https://images.unsplash.com/photo-1500937386664-56d1dfef3854?auto=format&fit=crop&w=800&q=80" 
+                                 alt="Agricultural Community" 
+                                 class="w-full h-48 object-cover group-hover:scale-105 transition duration-500"
+                                 onerror="this.src='https://placehold.co/800x400/1e4620/ffffff?text=Siem+Reap+Agriculture'">
+                            <div class="absolute bottom-0 inset-x-0 bg-gradient-to-t from-black/80 p-3 text-white">
+                                <p class="text-xs text-gold-500 font-bold">រូបភាពទី ២</p>
+                                <p class="text-xs">សកម្មភាពផលិតកម្មកសិកម្មជនបទ - ការពឹងផ្អែករបស់ប្រជាជនជាង ៨០% លើវិស័យកសិកម្ម</p>
+                            </div>
+                        </div>
+                    </div>
+                `
+            },
+            {
+                id: "priorities",
+                title: "៥. អាទិភាពយុទ្ធសាស្ត្រអភិវឌ្ឍន៍",
+                icon: "fa-solid fa-star",
+                render: () => `
+                    <div class="space-y-6">
+                        <div class="border-b border-slate-100 pb-4">
+                            <span class="text-xs font-bold text-gold-600 uppercase tracking-wider">ជំពូកទី ៥</span>
+                            <h2 class="header-moul text-xl text-royal-800 mt-1">ទិសដៅអាទិភាព និងកម្មវិធីអភិវឌ្ឍន៍សហគមន៍</h2>
+                        </div>
+
+                        <p class="text-slate-600 text-sm leading-relaxed text-justify">
+                            ដើម្បីសម្រេចបាននូវការអភិវឌ្ឍប្រកបដោយចីរភាព រដ្ឋបាលខេត្តបានដាក់ចេញនូវសសរស្ដម្ភយុទ្ធសាស្ត្រចំនួន ៤ ដូចខាងក្រោម៖
+                        </p>
+
+                        <div class="space-y-4">
+                            <div class="flex gap-4 p-4 rounded-xl hover:bg-slate-50 transition border border-slate-100">
+                                <div class="w-10 h-10 shrink-0 bg-royal-100 rounded-xl flex items-center justify-center text-royal-600 text-base font-bold">
+                                    ០១
+                                </div>
+                                <div class="space-y-1">
+                                    <h4 class="font-bold text-slate-900 text-sm">ការពង្រឹងហេដ្ឋារចនាសម្ព័ន្ធរូបវន្ត និងការតភ្ជាប់</h4>
+                                    <p class="text-xs text-slate-500 leading-relaxed">ការសាងសង់ផ្លូវក្រួសក្រហម ផ្លូវបេតុងជនបទ និងការធានាឱ្យមានការផ្គត់ផ្គង់ទឹកស្អាត និងអគ្គិសនីដល់គ្រប់ខ្នងផ្ទះសហគមន៍។</p>
+                                </div>
+                            </div>
+
+                            <div class="flex gap-4 p-4 rounded-xl hover:bg-slate-50 transition border border-slate-100">
+                                <div class="w-10 h-10 shrink-0 bg-emerald-100 rounded-xl flex items-center justify-center text-emerald-600 text-base font-bold">
+                                    ០២
+                                </div>
+                                <div class="space-y-1">
+                                    <h4 class="font-bold text-slate-900 text-sm">ការធ្វើពិពិធកម្មសេដ្ឋកិច្ចមូលដ្ឋាន</h4>
+                                    <p class="text-xs text-slate-500 leading-relaxed">ការបណ្តុះបណ្តាលបច្ចេកទេសកសិកម្មទំនើប ការជំរុញសហគ្រាសធុនតូច និងមធ្យម និងការលើកកម្ពស់សហគមន៍ទេសចរណ៍វប្បធម៌ជនបទ។</p>
+                                </div>
+                            </div>
+
+                            <div class="flex gap-4 p-4 rounded-xl hover:bg-slate-50 transition border border-slate-100">
+                                <div class="w-10 h-10 shrink-0 bg-purple-100 rounded-xl flex items-center justify-center text-purple-600 text-base font-bold">
+                                    ០៣
+                                </div>
+                                <div class="space-y-1">
+                                    <h4 class="font-bold text-slate-900 text-sm">សេវាសង្គមកិច្ច និងសមធម៌សង្គម</h4>
+                                    <p class="text-xs text-slate-500 leading-relaxed">ការសាងសង់ និងជួសជុលអគារសិក្សា សាលាមត្តេយ្យសហគមន៍ និងការបំពាក់ឧបករណ៍សុខាភិបាលនៅតាមមណ្ឌលសុខភាពឃុំ។</p>
+                                </div>
+                            </div>
+
+                            <div class="flex gap-4 p-4 rounded-xl hover:bg-slate-50 transition border border-slate-100">
+                                <div class="w-10 h-10 shrink-0 bg-amber-100 rounded-xl flex items-center justify-center text-amber-600 text-base font-bold">
+                                    ០៤
+                                </div>
+                                <div class="space-y-1">
+                                    <h4 class="font-bold text-slate-900 text-sm">ការគ្រប់គ្រងបរិស្ថាន និងភាពធន់នឹងអាកាសធាតុ</h4>
+                                    <p class="text-xs text-slate-500 leading-relaxed">ការស្តារប្រព័ន្ធប្រឡាយទឹក ការការពារសហគមន៍ព្រៃឈើ និងការលើកកម្ពស់ការគ្រប់គ្រងសំណល់រឹងក្នុងមូលដ្ឋាន។</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `
+            },
+            {
+                id: "quotes",
+                title: "៦. សំឡេងសហគមន៍ និងមតិយោបល់",
+                icon: "fa-solid fa-comments",
+                render: () => `
+                    <div class="space-y-6">
+                        <div class="border-b border-slate-100 pb-4">
+                            <span class="text-xs font-bold text-gold-600 uppercase tracking-wider">ជំពូកទី ៦</span>
+                            <h2 class="header-moul text-xl text-royal-800 mt-1">ការដកស្រង់សម្តី និងមតិយោបល់ពីអ្នកពាក់ព័ន្ធផ្ទាល់</h2>
+                        </div>
+
+                        <p class="text-slate-600 text-sm text-justify leading-relaxed">
+                            ការចូលរួមមតិយោបល់ពីគ្រប់ភាគីពាក់ព័ន្ធ ទាំងថ្នាក់ដឹកនាំរដ្ឋបាលមូលដ្ឋាន និងប្រជាពលរដ្ឋផ្ទាល់ គឺជាមូលដ្ឋានគ្រឹះនៃផែនការសកម្មភាពអភិវឌ្ឍន៍ប្រជាធិបតេយ្យ និងមានតម្លាភាព៖
+                        </p>
+
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <!-- Quote 1 -->
+                            <div class="bg-slate-50 border border-slate-200 p-5 rounded-2xl relative shadow-sm">
+                                <div class="absolute -top-3 right-5 bg-gold-500 text-white w-8 h-8 rounded-full flex items-center justify-center font-bold text-lg">
+                                    “
+                                </div>
+                                <p class="text-xs italic text-slate-600 leading-relaxed text-justify">
+                                    "នៅក្នុងឃុំរុនតាឯក ពួកយើងបានទទួលផលយ៉ាងច្រើនពីកម្មវិធីអភិវឌ្ឍន៍ហេដ្ឋារចនាសម្ព័ន្ធ។ ប៉ុន្តែសម្រាប់ការអភិវឌ្ឍឆ្នាំខាងមុខ ខ្ញុំយល់ថាពួកយើងត្រូវផ្តោតខ្លាំងបន្ថែមលើជំនាញវិជ្ជាជីវៈកសិកម្ម និងការបង្កើតការងារនៅក្នុងសហគមន៍ផ្ទាល់ ដើម្បីកាត់បន្ថយការចំណាកស្រុករបស់យុវជន។"
+                                </p>
+                                <div class="mt-4 flex items-center gap-3 border-t border-slate-200/60 pt-3">
+                                    <div class="w-9 h-9 rounded-full bg-royal-100 flex items-center justify-center font-bold text-royal-700 text-xs">
+                                        ស.ផ
+                                    </div>
+                                    <div>
+                                        <h4 class="text-xs font-bold text-slate-900">លោក សយ ផុន</h4>
+                                        <p class="text-[10px] text-slate-500">ប្រធានសហគមន៍អភិវឌ្ឍន៍រុនតាឯក ស្រុកបន្ទាយស្រី</p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Quote 2 -->
+                            <div class="bg-slate-50 border border-slate-200 p-5 rounded-2xl relative shadow-sm">
+                                <div class="absolute -top-3 right-5 bg-royal-500 text-white w-8 h-8 rounded-full flex items-center justify-center font-bold text-lg">
+                                    “
+                                </div>
+                                <p class="text-xs italic text-slate-600 leading-relaxed text-justify">
+                                    "គណនេយ្យភាពសង្គម និងតម្លាភាពក្នុងការប្រើប្រាស់កញ្ចប់ថវិកាឃុំ-សង្កាត់ បានធ្វើឱ្យប្រជាពលរដ្ឋមានទំនុកចិត្តខ្ពស់។ ពួកគាត់បានចូលរួមយ៉ាងសកម្មក្នុងគ្រប់កិច្ចប្រជុំសម្រេចចិត្ត និងការតាមដានការសាងសង់ផ្លូវថ្នល់ និងសាលារៀនមូលដ្ឋាន។"
+                                </p>
+                                <div class="mt-4 flex items-center gap-3 border-t border-slate-200/60 pt-3">
+                                    <div class="w-9 h-9 rounded-full bg-temple-100 flex items-center justify-center font-bold text-temple-700 text-xs">
+                                        ច.ម
+                                    </div>
+                                    <div>
+                                        <h4 class="text-xs font-bold text-slate-900">លោកស្រី ចាន់ ម៉ាលី</h4>
+                                        <p class="text-[10px] text-slate-500">សមាជិកក្រុមប្រឹក្សាឃុំពួក ស្រុកពួក</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Community Workshop Image -->
+                        <div class="rounded-2xl overflow-hidden shadow-sm border border-slate-100 relative group">
+                            <img src="https://images.unsplash.com/photo-1517245386807-bb43f82c33c4?auto=format&fit=crop&w=800&q=80" 
+                                 alt="Community workshop" 
+                                 class="w-full h-48 object-cover group-hover:scale-105 transition duration-500"
+                                 onerror="this.src='https://placehold.co/800x400/0f4c81/ffffff?text=Stakeholder+Meeting'">
+                            <div class="absolute bottom-0 inset-x-0 bg-gradient-to-t from-black/80 p-3 text-white">
+                                <p class="text-xs text-gold-500 font-bold">រូបភាពទី ៣</p>
+                                <p class="text-xs">វេទិកាពិគ្រោះយោបល់ថ្នាក់ឃុំ-សង្កាត់ - ការចូលរួមរបស់ប្រជាពលរដ្ឋក្នុងការរៀបចំផែនការវិនិយោគសហគមន៍</p>
+                            </div>
+                        </div>
+                    </div>
+                `
+            }
+        ];
+
+        window.onload = function() {
+            renderSidebarNav();
+            loadCurrentPage();
+            setupExcelUpload();
+            setupModalEvents();
+        };
+
+        // Render dynamic navigation menu
+        function renderSidebarNav() {
+            const navContainer = document.getElementById('report-nav');
+            navContainer.innerHTML = '';
+            
+            reportBook.forEach((page, index) => {
+                const isSelected = index === currentPageIndex;
+                const navButton = document.createElement('button');
+                navButton.className = `w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-left text-xs font-bold transition duration-150 ${
+                    isSelected 
+                    ? 'bg-royal-500 text-white shadow-md shadow-royal-500/10' 
+                    : 'text-slate-600 hover:bg-slate-50 hover:text-royal-600'
+                }`;
+                navButton.onclick = () => navigateToPage(index);
+                
+                navButton.innerHTML = `
+                    <div class="flex items-center gap-2.5">
+                        <span class="w-5 h-5 flex items-center justify-center text-xs rounded-lg ${isSelected ? 'text-white' : 'text-slate-400'}">
+                            <i class="${page.icon}"></i>
+                        </span>
+                        <span>${page.title}</span>
+                    </div>
+                    <i class="fa-solid fa-chevron-right text-[10px] ${isSelected ? 'text-white/80' : 'text-slate-300'}"></i>
+                `;
+                navContainer.appendChild(navButton);
+            });
+        }
+
+        function navigateToPage(index) {
+            if (index >= 0 && index < reportBook.length) {
+                currentPageIndex = index;
+                renderSidebarNav();
+                loadCurrentPage();
+            }
+        }
+
+        // Render document page contents
+        function loadCurrentPage() {
+            const page = reportBook[currentPageIndex];
+            const contentContainer = document.getElementById('canvas-content');
+            
+            // Re-label active title
+            document.getElementById('current-page-title-label').innerText = page.title;
+            
+            // Set up pagination buttons
+            const btnPrev = document.getElementById('btn-prev-page');
+            const btnNext = document.getElementById('btn-next-page');
+            btnPrev.disabled = currentPageIndex === 0;
+            btnNext.disabled = currentPageIndex === reportBook.length - 1;
+            
+            // Refresh indicator text
+            document.getElementById('page-counter').innerText = `ទំព័រ ${currentPageIndex + 1} / ${reportBook.length}`;
+
+            // Inject main body content
+            contentContainer.innerHTML = page.render();
+
+            // Fire onLoad lifecycle action if specified (for charts init)
+            if (page.onLoad) {
+                setTimeout(page.onLoad, 100);
+            }
+        }
+
+        // Setup custom click handlers for prev/next
+        document.getElementById('btn-prev-page').onclick = () => {
+            if (currentPageIndex > 0) navigateToPage(currentPageIndex - 1);
+        };
+        document.getElementById('btn-next-page').onclick = () => {
+            if (currentPageIndex < reportBook.length - 1) navigateToPage(currentPageIndex + 1);
+        };
+
+        // Global variables storing active Chart.js instances for dynamic clean-up
+        let activeDemographicsChart = null;
+        let activePovertyChart = null;
+
+        // Clean-up and Initialize Demographics Chart
+        function initDemographicsChart() {
+            const ctx = document.getElementById('demographicsChart');
+            if (!ctx) return;
+
+            // Critical logic: Clean up and destroy old instance prior to creating a new one
+            if (activeDemographicsChart) {
+                activeDemographicsChart.destroy();
+                activeDemographicsChart = null;
+            }
+
+            const sortedData = [...currentActiveData].sort((a, b) => b.population - a.population);
+            const labels = sortedData.map(d => d.districtKh);
+            const datasetValues = sortedData.map(d => d.population);
+
+            activeDemographicsChart = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'ចំនួនប្រជាជន (នាក់)',
+                        data: datasetValues,
+                        backgroundColor: 'rgba(15, 76, 129, 0.85)',
+                        borderColor: '#0f4c81',
+                        borderWidth: 1.5,
+                        borderRadius: 6,
+                        hoverBackgroundColor: 'rgba(212, 175, 55, 0.95)',
+                        hoverBorderColor: '#d4af37'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            labels: {
+                                font: { family: 'Kantumruy Pro', size: 11 }
+                            }
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: {
+                                font: { family: 'Kantumruy Pro', size: 10 }
+                            }
+                        },
+                        x: {
+                            ticks: {
+                                font: { family: 'Kantumruy Pro', size: 10 },
+                                maxRotation: 45,
+                                minRotation: 45
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        // Clean-up and Initialize Poverty Indices Chart
+        function initPovertyChart() {
+            const ctx = document.getElementById('povertyChart');
+            if (!ctx) return;
+
+            // Critical logic: Clean up and destroy old instance prior to creating a new one
+            if (activePovertyChart) {
+                activePovertyChart.destroy();
+                activePovertyChart = null;
+            }
+
+            const sortedData = [...currentActiveData].sort((a, b) => b.povertyRate - a.povertyRate);
+            const labels = sortedData.map(d => d.districtKh);
+            const datasetValues = sortedData.map(d => d.povertyRate);
+
+            activePovertyChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'អត្រាភាពក្រីក្រ (%)',
+                        data: datasetValues,
+                        borderColor: '#e11d48',
+                        backgroundColor: 'rgba(225, 29, 72, 0.1)',
+                        borderWidth: 3,
+                        pointBackgroundColor: '#d4af37',
+                        pointBorderColor: '#e11d48',
+                        pointRadius: 5,
+                        fill: true,
+                        tension: 0.3
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            labels: {
+                                font: { family: 'Kantumruy Pro', size: 11 }
+                            }
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            max: 40,
+                            ticks: {
+                                font: { family: 'Kantumruy Pro', size: 10 }
+                            }
+                        },
+                        x: {
+                            ticks: {
+                                font: { family: 'Kantumruy Pro', size: 10 },
+                                maxRotation: 45,
+                                minRotation: 45
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        // Setup Drag & Drop plus Standard file triggers for xlsx reading
+        function setupExcelUpload() {
+            const dropZone = document.getElementById('drop-zone');
+            const fileInput = document.getElementById('excel-upload');
+            const btnReset = document.getElementById('btn-reset-data');
+
+            dropZone.addEventListener('dragover', (e) => {
+                e.preventDefault();
+                dropZone.classList.add('bg-slate-100', 'border-royal-500');
+            });
+
+            dropZone.addEventListener('dragleave', () => {
+                dropZone.classList.remove('bg-slate-100', 'border-royal-500');
+            });
+
+            dropZone.addEventListener('drop', (e) => {
+                e.preventDefault();
+                dropZone.classList.remove('bg-slate-100', 'border-royal-500');
+                const file = e.dataTransfer.files[0];
+                if (file) handleExcelParse(file);
+            });
+
+            fileInput.addEventListener('change', (e) => {
+                const file = e.target.files[0];
+                if (file) handleExcelParse(file);
+            });
+
+            btnReset.addEventListener('click', () => {
+                currentActiveData = JSON.parse(JSON.stringify(defaultSiemReapData));
+                document.getElementById('excel-status').innerText = 'Default Data Active';
+                document.getElementById('excel-status').className = 'text-xs font-semibold px-2.5 py-0.5 rounded-full bg-blue-50 text-blue-600 border border-blue-100';
+                refreshCurrentlyDisplayedPage();
+                showCustomToast('បានកំណត់ទិន្នន័យដើមឡើងវិញដោយជោគជ័យ!');
+            });
+        }
+
+        function handleExcelParse(file) {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const data = new Uint8Array(e.target.result);
+                    const workbook = XLSX.read(data, { type: 'array' });
+                    const firstSheetName = workbook.SheetNames[0];
+                    const worksheet = workbook.Sheets[firstSheetName];
+                    
+                    // Parse rows to JSON
+                    const rawJson = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
+                    
+                    if (rawJson.length < 2) {
+                        alert("ទិន្នន័យនៅក្នុងឯកសារ Excel មិនគ្រប់គ្រាន់ ឬមិនត្រឹមត្រូវ!");
+                        return;
+                    }
+
+                    // Process rows to extract provincial districts, aligning with ProvTableByDistrict_K_17_2025.xlsx structure
+                    // Map headers: looking for columns with names matching code, district, communes, population, poverty, sector
+                    const parsedDistricts = [];
+                    const headers = rawJson[0].map(h => String(h).toLowerCase().trim());
+                    
+                    // Fallback to position parsing if headers are highly localized or customized
+                    for(let r = 1; r < rawJson.length; r++) {
+                        const row = rawJson[r];
+                        if (row.length === 0 || !row[0]) continue;
+                        
+                        // Parse values with robust fallbacks
+                        const code = String(row[0] || '1700');
+                        const districtKh = String(row[1] || 'ស្រុកគំរូ');
+                        const communes = parseInt(row[2]) || 5;
+                        const population = parseInt(row[3]) || 50000;
+                        const povertyRate = parseFloat(row[4]) || 15.0;
+                        const mainSector = String(row[5] || 'កសិកម្ម');
+
+                        // Ensure we parse districts of Siem Reap (code starts with 17)
+                        if (code.startsWith('17')) {
+                            parsedDistricts.push({
+                                code,
+                                districtKh,
+                                communes,
+                                population,
+                                povertyRate,
+                                mainSector
+                            });
+                        }
+                    }
+
+                    if (parsedDistricts.length > 0) {
+                        currentActiveData = parsedDistricts;
+                        document.getElementById('excel-status').innerText = 'Synced: ' + file.name;
+                        document.getElementById('excel-status').className = 'text-xs font-semibold px-2.5 py-0.5 rounded-full bg-emerald-50 text-emerald-600 border border-emerald-100';
+                        refreshCurrentlyDisplayedPage();
+                        showCustomToast('បានភ្ជាប់ និងធ្វើបច្ចុប្បន្នភាពទិន្នន័យពី ' + file.name + ' ដោយជោគជ័យ!');
+                    } else {
+                        showCustomToast('រកមិនឃើញកូដស្រុកខេត្តសៀមរាប (17xx) នៅក្នុងឯកសារឡើយ!', 'error');
+                    }
+                } catch(error) {
+                    console.error("Excel Read Error:", error);
+                    showCustomToast('ការអានឯកសារមានកំហុស។ សូមប្រាកដថាឯកសារនេះគឺ ProvTableByDistrict_K_17_2025.xlsx', 'error');
+                }
+            };
+            reader.readAsArrayBuffer(file);
+        }
+
+        function refreshCurrentlyDisplayedPage() {
+            // Re-render navigation sidebar & current view with new data
+            renderSidebarNav();
+            loadCurrentPage();
+        }
+
+        function setupModalEvents() {
+            const modal = document.getElementById('data-modal');
+            const btnOpen = document.getElementById('btn-view-excel');
+            const btnCloseX = document.getElementById('btn-close-modal');
+            const btnCloseFooter = document.getElementById('btn-close-modal-footer');
+
+            btnOpen.onclick = () => {
+                populateDistrictsTable();
+                modal.classList.remove('hidden');
+            };
+
+            const closeModal = () => modal.classList.add('hidden');
+            btnCloseX.onclick = closeModal;
+            btnCloseFooter.onclick = closeModal;
+            modal.onclick = (e) => {
+                if (e.target === modal) closeModal();
+            };
+        }
+
+        function populateDistrictsTable() {
+            const tableBody = document.getElementById('districts-table-body');
+            tableBody.innerHTML = '';
+            
+            currentActiveData.forEach(d => {
+                const row = document.createElement('tr');
+                row.className = 'hover:bg-slate-50 transition duration-150';
+                row.innerHTML = `
+                    <td class="px-4 py-3 font-mono text-xs font-semibold text-slate-500">${d.code}</td>
+                    <td class="px-4 py-3 font-bold text-slate-800">${d.districtKh}</td>
+                    <td class="px-4 py-3 text-slate-600">${d.communes} ឃុំ-សង្កាត់</td>
+                    <td class="px-4 py-3 text-right font-semibold text-slate-700">${d.population.toLocaleString()}</td>
+                    <td class="px-4 py-3 text-right font-bold ${d.povertyRate > 20 ? 'text-rose-600' : 'text-slate-700'}">${d.povertyRate}%</td>
+                    <td class="px-4 py-3 text-xs text-slate-500 font-semibold">${d.mainSector}</td>
+                `;
+                tableBody.appendChild(row);
+            });
+        }
+
+        function showCustomToast(message, type = 'success') {
+            // Prevent duplicated toast rendering
+            const oldToast = document.getElementById('custom-toast');
+            if (oldToast) oldToast.remove();
+
+            const toast = document.createElement('div');
+            toast.id = 'custom-toast';
+            toast.className = `fixed bottom-6 right-6 z-50 px-5 py-3 rounded-2xl shadow-xl flex items-center gap-2 border text-xs font-bold transition transform duration-300 translate-y-10 opacity-0 ${
+                type === 'success' 
+                ? 'bg-emerald-50 text-emerald-800 border-emerald-200' 
+                : 'bg-rose-50 text-rose-800 border-rose-200'
+            }`;
+            
+            const icon = type === 'success' 
+                ? '<i class="fa-solid fa-circle-check text-emerald-600 text-lg"></i>' 
+                : '<i class="fa-solid fa-triangle-exclamation text-rose-600 text-lg"></i>';
+            
+            toast.innerHTML = `${icon} <span>${message}</span>`;
+            document.body.appendChild(toast);
+
+            // Trigger animation
+            setTimeout(() => {
+                toast.classList.remove('translate-y-10', 'opacity-0');
+            }, 10);
+
+            // Dismiss after 4 seconds
+            setTimeout(() => {
+                toast.classList.add('translate-y-10', 'opacity-0');
+                setTimeout(() => toast.remove(), 300);
+            }, 4000);
+        }
+
+        // Build styling header compatible with MS Word layout engine
+        const getWordDocumentHeader = () => `
+            <html xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:w='urn:schemas-microsoft-com:office:word' xmlns='http://www.w3.org/TR/REC-html40'>
+            <head>
+                <meta charset='utf-8'>
+                <title>របាយការណ៍យុទ្ធសាស្ត្រអភិវឌ្ឍន៍ឃុំ-សង្កាត់ - ខេត្តសៀមរាប</title>
+                <style>
+                    @page Section1 {
+                        size: 595.3pt 841.9pt; /* A4 Size */
+                        margin: 1.0in 1.0in 1.0in 1.0in;
+                        mso-header-margin: .5in;
+                        mso-footer-margin: .5in;
+                        mso-paper-source: 0;
+                    }
+                    div.Section1 { page: Section1; }
+                    body {
+                        font-family: 'Khmer OS Battambang', 'Segoe UI', Arial, sans-serif;
+                        font-size: 11pt;
+                        line-height: 1.6;
+                        color: #333333;
+                    }
+                    .moul-title {
+                        font-family: 'Khmer OS Muol Light', serif;
+                        color: #0f4c81;
+                        text-align: center;
+                        margin-bottom: 25px;
+                    }
+                    h1 {
+                        font-family: 'Khmer OS Muol Light', Arial, sans-serif;
+                        font-size: 16pt;
+                        color: #0f4c81;
+                        text-align: center;
+                        margin-top: 30px;
+                        margin-bottom: 20px;
+                    }
+                    h2 {
+                        font-family: 'Khmer OS Muol Light', Arial, sans-serif;
+                        font-size: 13pt;
+                        color: #1e4620;
+                        border-bottom: 2px solid #1e4620;
+                        padding-bottom: 5px;
+                        margin-top: 25px;
+                    }
+                    h3 {
+                        font-family: 'Khmer OS Battambang', Arial, sans-serif;
+                        font-weight: bold;
+                        font-size: 11pt;
+                        color: #1f2937;
+                        margin-top: 15px;
+                    }
+                    p {
+                        margin-bottom: 12px;
+                        text-indent: 0.5in;
+                        text-align: justify;
+                    }
+                    .quote-container {
+                        background-color: #f3f4f6;
+                        border-left: 4px solid #0f4c81;
+                        padding: 12px 18px;
+                        margin: 15px 0;
+                    }
+                    .quote-text {
+                        font-style: italic;
+                        color: #4b5563;
+                        font-size: 10.5pt;
+                    }
+                    .quote-author {
+                        font-weight: bold;
+                        font-size: 9.5pt;
+                        color: #1f2937;
+                        margin-top: 6px;
+                    }
+                    table {
+                        width: 100%;
+                        border-collapse: collapse;
+                        margin: 20px 0;
+                    }
+                    th, td {
+                        border: 1px solid #cccccc;
+                        padding: 8px 12px;
+                        text-align: left;
+                    }
+                    th {
+                        background-color: #e5e7eb;
+                        font-weight: bold;
+                        font-family: 'Khmer OS Battambang', sans-serif;
+                    }
+                    .page-break {
+                        page-break-before: always;
+                    }
+                    .text-center {
+                        text-align: center;
+                    }
+                    .bold {
+                        font-weight: bold;
+                    }
+                </style>
+            </head>
+            <body>
+            <div class="Section1">
+        `;
+
+        const getWordDocumentFooter = () => `
+            </div>
+            </body>
+            </html>
+        `;
+
+        // Export only the currently viewed dashboard page
+        function exportCurrentPageToWord() {
+            let pageHtml = "";
+            const page = reportBook[currentPageIndex];
+
+            if (currentPageIndex === 0) {
+                // Formatting cover page content for Word export
+                pageHtml = `
+                    <div style="text-align: center; padding-top: 100px; padding-bottom: 100px;">
+                        <h2 class="moul-title" style="font-size: 18pt;">ព្រះរាជាណាកម្ពុជា</h2>
+                        <h3 class="moul-title" style="font-size: 15pt; margin-top: -10px;">ជាតិ សាសនា ព្រះមហាក្សត្រ</h3>
+                        <p style="text-align: center; text-indent: 0; font-size: 14pt;">***</p>
+                        <br><br>
+                        <h1 class="moul-title" style="font-size: 24pt; color: #0f4c81; margin-top: 50px;">
+                            ផែនការយុទ្ធសាស្ត្រអភិវឌ្ឍន៍ឃុំ-សង្កាត់<br>ខេត្តសៀមរាប
+                        </h1>
+                        <p style="text-align: center; text-indent: 0; color: #555555; font-size: 11pt; font-weight: bold; letter-spacing: 1px;">
+                            COMMUNE-SANGKAT STRATEGIC DEVELOPMENT PLAN (2026-2030)
+                        </p>
+                        <br><br><br>
+                        <div style="margin-top: 100px; font-weight: bold;">
+                            <p style="text-align: center; text-indent: 0; font-size: 12pt;">រៀបចំដោយ៖ រដ្ឋបាលខេត្តសៀមរាប</p>
+                            <p style="text-align: center; text-indent: 0; font-size: 10pt; color: #666666;">គាំទ្របច្ចេកទេស និងទិន្នន័យ៖ ក្រសួងផែនការ និងដៃគូអភិវឌ្ឍន៍ជាតិ</p>
+                        </div>
+                    </div>
+                `;
+            } else if (page.id === 'demographics' || page.id === 'poverty') {
+                // Including dynamic datatable in place of canvases when exporting data views
+                pageHtml = renderWordDataChapters(page.id);
+            } else {
+                pageHtml = cleanAndConvertActiveDocumentHtml();
+            }
+
+            const completeHtml = getWordDocumentHeader() + pageHtml + getWordDocumentFooter();
+            triggerWordDocumentDownload(completeHtml, `ផែនការយុទ្ធសាស្ត្រ_${page.title.replace(/\s+/g, '')}.doc`);
+        }
+
+        // Export entire strategic report book cleanly
+        function exportFullDocumentToWord() {
+            let fullHtml = "";
+
+            reportBook.forEach((page, idx) => {
+                if (idx > 0) {
+                    fullHtml += '<br style="page-break-before: always; clear: both;" class="page-break" />';
+                }
+
+                if (idx === 0) {
+                    fullHtml += `
+                        <div style="text-align: center; padding-top: 100px; padding-bottom: 100px;">
+                            <h2 class="moul-title" style="font-size: 18pt;">ព្រះរាជាណាចក្រកម្ពុជា</h2>
+                            <h3 class="moul-title" style="font-size: 15pt; margin-top: -10px;">ជាតិ សាសនា ព្រះមហាក្សត្រ</h3>
+                            <p style="text-align: center; text-indent: 0; font-size: 14pt;">***</p>
+                            <br><br>
+                            <h1 class="moul-title" style="font-size: 24pt; color: #0f4c81; margin-top: 50px; line-height: 1.5;">
+                                ផែនការយុទ្ធសាស្ត្រអភិវឌ្ឍន៍ឃុំ-សង្កាត់<br>ខេត្តសៀមរាប
+                            </h1>
+                            <p style="text-align: center; text-indent: 0; color: #555555; font-size: 11pt; font-weight: bold; letter-spacing: 1px;">
+                                COMMUNE-SANGKAT STRATEGIC DEVELOPMENT PLAN (2026-2030)
+                            </p>
+                            <br><br><br>
+                            <div style="margin-top: 100px; font-weight: bold;">
+                                <p style="text-align: center; text-indent: 0; font-size: 12pt;">រៀបចំដោយ៖ រដ្ឋបាលខេត្តសៀមរាប</p>
+                                <p style="text-align: center; text-indent: 0; font-size: 10pt; color: #666666;">គាំទ្របច្ចេកទេស និងទិន្នន័យ៖ ក្រសួងផែនការ និងដៃគូអភិវឌ្ឍន៍ជាតិ</p>
+                            </div>
+                        </div>
+                    `;
+                } else if (page.id === 'demographics' || page.id === 'poverty') {
+                    fullHtml += renderWordDataChapters(page.id);
+                } else {
+                    // Extract page layout using temporary isolated elements
+                    const tempDiv = document.createElement('div');
+                    tempDiv.innerHTML = page.render();
+                    
+                    // Format Unsplash stock images as inline paragraphs or table format for Word compatibility
+                    const imgs = tempDiv.querySelectorAll('img');
+                    imgs.forEach((img, i) => {
+                        const caption = img.nextElementSibling ? img.nextElementSibling.innerText : `រូបភាពទី ${i+1}`;
+                        const pImg = document.createElement('p');
+                        pImg.className = 'text-center';
+                        pImg.style.textIndent = '0';
+                        pImg.innerHTML = `<br><b>[ឯកសារយោង៖ រូបភាព ${caption}]</b><br><br>`;
+                        img.replaceWith(pImg);
+                    });
+
+                    // Format Tailwind layout columns to simple inline blocks or headings compatible with Word
+                    const quoteBox = tempDiv.querySelector('.bg-royal-50, .bg-slate-50');
+                    if (quoteBox) {
+                        const italicText = quoteBox.querySelector('p.italic')?.innerText || '';
+                        const author = quoteBox.querySelector('h4')?.innerText || '';
+                        const role = quoteBox.querySelector('p:not(.italic)')?.innerText || '';
+                        
+                        const newQuote = document.createElement('div');
+                        newQuote.className = 'quote-container';
+                        newQuote.innerHTML = `
+                            <p class="quote-text">"${italicText}"</p>
+                            <p class="quote-author">— ${author} (${role})</p>
+                        `;
+                        quoteBox.replaceWith(newQuote);
+                    }
+
+                    fullHtml += tempDiv.innerHTML;
+                }
+            });
+
+            const completeHtml = getWordDocumentHeader() + fullHtml + getWordDocumentFooter();
+            triggerWordDocumentDownload(completeHtml, "ផែនការយុទ្ធសាស្ត្រអភិវឌ្ឍន៍ឃុំ_សង្កាត់_ខេត្តសៀមរាប_ពេញលេញ.doc");
+        }
+
+        // Parse and build HTML for chapters containing canvas components (Charts can't render natively in offline Word without base64, so tables are best)
+        function renderWordDataChapters(chapterId) {
+            let html = "";
+            if (chapterId === 'demographics') {
+                html = `
+                    <h2>ជំពូកទី ២៖ ប្រវត្តិរូបប្រជាសាស្ត្រ និងសូចនាករសង្គម</h2>
+                    <p>
+                        ខេត្តសៀមរាបត្រូវបានបែងចែកជា ១២ ក្រុង-ស្រុក និងមានឃុំ-សង្កាត់ចំនួន ១០០។ ការយល់ដឹងអំពីទំហំប្រជាសាស្ត្រ និងសូចនាករមូលដ្ឋាន មានសារៈសំខាន់ណាស់ក្នុងការរៀបចំថវិកា និងធនធានឱ្យចំគោលដៅ។ ខាងក្រោមនេះជាតារាងសូចនាករប្រជាជនផ្លូវការយោងតាមឯកសារ <b>ProvTableByDistrict_K_17_2025.xlsx</b>៖
+                    </p>
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>លេខកូដ</th>
+                                <th>ក្រុង-ស្រុក</th>
+                                <th>ឃុំ-សង្កាត់</th>
+                                <th>ចំនួនប្រជាជន (នាក់)</th>
+                                <th>វិស័យចម្បង</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                `;
+                currentActiveData.forEach(d => {
+                    html += `
+                        <tr>
+                            <td>${d.code}</td>
+                            <td class="bold">${d.districtKh}</td>
+                            <td>${d.communes} ឃុំ-សង្កាត់</td>
+                            <td style="text-align: right;">${d.population.toLocaleString()}</td>
+                            <td>${d.mainSector}</td>
+                        </tr>
+                    `;
+                });
+                html += `
+                        </tbody>
+                    </table>
+                `;
+            } else if (chapterId === 'poverty') {
+                html = `
+                    <h2>ជំពូកទី ៣៖ ការវិភាគស្ថានភាពភាពក្រីក្រតាមបណ្តាស្រុក</h2>
+                    <p>
+                        ទោះបីជាខេត្តសៀមរាបជាមជ្ឈមណ្ឌលទេសចរណ៍លំដាប់អន្តរជាតិក៏ដោយ គម្លាតសេដ្ឋកិច្ចរវាងតំបន់ទីក្រុង និងតំបន់ជនបទដាច់ស្រយាលនៅតែមានទំហំធំធេងនៅឡើយ។ ខាងក្រោមនេះជាទិន្នន័យអត្រានៃភាពក្រីក្រដែលបានដកស្រង់ចេញពីឯកសារគំរូ <b>ProvTableByDistrict_K_17_2025.xlsx</b>៖
+                    </p>
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>លេខកូដ</th>
+                                <th>ក្រុង-ស្រុក</th>
+                                <th>អត្រាភាពក្រីក្រ (%)</th>
+                                <th>វិស័យចម្បង</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                `;
+                currentActiveData.forEach(d => {
+                    html += `
+                        <tr>
+                            <td>${d.code}</td>
+                            <td class="bold">${d.districtKh}</td>
+                            <td style="text-align: right; font-weight: bold; color: #cc0000;">${d.povertyRate}%</td>
+                            <td>${d.mainSector}</td>
+                        </tr>
+                    `;
+                });
+                html += `
+                        </tbody>
+                    </table>
+                `;
+            }
+            return html;
+        }
+
+        // Clean Active Document markup for clean Word formatting
+        function cleanAndConvertActiveDocumentHtml() {
+            const canvasContent = document.getElementById('canvas-content').cloneNode(true);
+            
+            // Format quotes
+            const quotes = canvasContent.querySelectorAll('.bg-royal-50, .bg-slate-50');
+            quotes.forEach(quote => {
+                const italicText = quote.querySelector('p.italic')?.innerText || '';
+                const author = quote.querySelector('h4')?.innerText || '';
+                const role = quote.querySelector('p:not(.italic)')?.innerText || '';
+                
+                const newQuote = document.createElement('div');
+                newQuote.className = 'quote-container';
+                newQuote.innerHTML = `
+                    <p class="quote-text">"${italicText}"</p>
+                    <p class="quote-author">— ${author} (${role})</p>
+                `;
+                quote.replaceWith(newQuote);
+            });
+
+            // Format image tags
+            const imgs = canvasContent.querySelectorAll('img');
+            imgs.forEach((img, i) => {
+                const caption = img.nextElementSibling ? img.nextElementSibling.innerText : `រូបភាពទី ${i+1}`;
+                const pImg = document.createElement('p');
+                pImg.className = 'text-center';
+                pImg.style.textIndent = '0';
+                pImg.innerHTML = `<br><b>[ឯកសារយោង៖ រូបភាព ${caption}]</b><br><br>`;
+                img.replaceWith(pImg);
+            });
+
+            return canvasContent.innerHTML;
+        }
+
+        // Trigger dynamic download action for .doc payload
+        function triggerWordDocumentDownload(htmlPayload, filename) {
+            const blob = new Blob(['\ufeff' + htmlPayload], {
+                type: 'application/msword;charset=utf-8'
+            });
+            
+            // Use standard anchor link download approach
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(blob);
+            link.download = filename;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            showCustomToast(`ឯកសារ "${filename}" ត្រូវបានទាញយកដោយជោគជ័យ!`);
+        }
+    </script>
+</body>
+</html>
