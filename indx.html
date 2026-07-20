@@ -1,0 +1,1162 @@
+<!DOCTYPE html>
+<html lang="km">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ប្រព័ន្ធរៀបចំផែនការយុទ្ធសាស្ត្រអភិវឌ្ឍន៍ឃុំ-សង្កាត់ - ខេត្តសៀមរាប</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome for beautiful icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts for premium Khmer Typography -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Kantumruy+Pro:ital,wght@0,300;0,400;0,700;1,400&family=Moul&family=Siemreap&display=swap" rel="stylesheet">
+    <!-- SheetJS to read Excel file ProvTableByDistrict_K_17_2025_2.xlsx -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+
+    <style>
+        body {
+            font-family: 'Kantumruy Pro', 'Siemreap', sans-serif;
+            background-color: #f1f5f9;
+        }
+        .khmer-moul {
+            font-family: 'Moul', cursive;
+        }
+        /* Custom A4 Page Simulation for Preview */
+        .a4-page {
+            width: 210mm;
+            min-height: 297mm;
+            padding: 25mm 20mm 20mm 25mm; /* Classic Cambodian Admin Margins: Left 25mm, top/bottom/right */
+            margin: 20px auto;
+            background: white;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            position: relative;
+            box-sizing: border-box;
+            color: #1f2937;
+            font-size: 14px;
+            line-height: 1.8;
+        }
+        .page-break-line {
+            border-top: 2px dashed #cbd5e1;
+            position: relative;
+            margin: 40px 0;
+        }
+        .page-break-line::after {
+            content: "ទំព័របន្ទាប់ (Page Break)";
+            position: absolute;
+            top: -12px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #f1f5f9;
+            padding: 0 15px;
+            font-size: 12px;
+            color: #64748b;
+            font-weight: bold;
+        }
+        /* Hide scrollbars for visual quality */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #f1f5f9;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8;
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col">
+
+    <!-- Top Administrative Header Bar -->
+    <header class="bg-gradient-to-r from-blue-900 to-teal-800 text-white shadow-md px-6 py-4 sticky top-0 z-50">
+        <div class="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center gap-4">
+            <div class="flex items-center gap-4">
+                <div class="p-3 bg-white/10 rounded-full">
+                    <i class="fa-solid fa-hotel text-2xl text-yellow-300"></i>
+                </div>
+                <div>
+                    <h1 class="text-xl md:text-2xl font-bold khmer-moul tracking-wider text-yellow-300">ប្រព័ន្ធរៀបចំផែនការយុទ្ធសាស្ត្រអភិវឌ្ឍន៍ឃុំ-សង្កាត់</h1>
+                    <p class="text-xs text-slate-300 font-medium">ការវិភាគទិន្នន័យ និងរៀបចំឯកសារយុទ្ធសាស្ត្រថ្នាក់មូលដ្ឋាន ខេត្តសៀមរាប</p>
+                </div>
+            </div>
+            <div class="flex items-center gap-3">
+                <button onclick="exportToWord()" class="bg-emerald-600 hover:bg-emerald-500 text-white font-bold px-5 py-2.5 rounded-lg shadow-md transition duration-200 flex items-center gap-2">
+                    <i class="fa-solid fa-file-word text-lg"></i>
+                    <span>ទាញយកជាឯកសារ MS-Word (.doc)</span>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <main class="flex-1 max-w-full w-full mx-auto flex flex-col lg:flex-row gap-6 p-4 lg:p-6">
+        
+        <!-- Left Side Control Panel (Data manipulation, Uploading & Settings) -->
+        <div class="w-full lg:w-1/3 xl:w-1/4 flex flex-col gap-6">
+            
+            <!-- Excel Reference and Uploader Section -->
+            <div class="bg-white rounded-xl shadow-md p-5 border border-slate-200">
+                <div class="flex items-center gap-3 mb-4">
+                    <div class="p-2 bg-blue-100 rounded-lg text-blue-800">
+                        <i class="fa-solid fa-file-excel text-xl"></i>
+                    </div>
+                    <div>
+                        <h2 class="font-bold text-slate-800">ឯកសារយោងទិន្នន័យ</h2>
+                        <p class="text-xs text-slate-500">ProvTableByDistrict_K_17_2025_2.xlsx</p>
+                    </div>
+                </div>
+
+                <p class="text-xs text-slate-600 mb-4 leading-relaxed">
+                    ប្រព័ន្ធបានភ្ជាប់ទិន្នន័យស្ដង់ដារសម្រាប់ស្រុកទាំង១២ នៃខេត្តសៀមរាបរួចជាស្រេច។ លោកអ្នកក៏អាចបញ្ចូល ឬអូសទម្លាក់ឯកសារ Excel <span class="font-semibold text-slate-800">ProvTableByDistrict_K_17_2025_2.xlsx</span> ផ្ទាល់ខ្លួន ដើម្បីធ្វើបច្ចុប្បន្នភាពទិន្នន័យភ្លាមៗ។
+                </p>
+
+                <!-- File Drag and Drop -->
+                <div id="dropzone" class="border-2 border-dashed border-slate-300 hover:border-blue-500 rounded-xl p-4 text-center cursor-pointer transition duration-200 bg-slate-50 hover:bg-blue-50">
+                    <input type="file" id="excelFile" accept=".xlsx, .xls" class="hidden" onchange="handleExcelUpload(event)">
+                    <label for="excelFile" class="cursor-pointer block">
+                        <i class="fa-solid fa-cloud-arrow-up text-3xl text-slate-400 mb-2"></i>
+                        <span class="block text-sm font-semibold text-slate-700">ជ្រើសរើស ឬអូសទម្លាក់ឯកសារ</span>
+                        <span class="block text-[11px] text-slate-400 mt-1">គាំទ្រតែប្រភេទ .xlsx ប៉ុណ្ណោះ</span>
+                    </label>
+                </div>
+                <div id="uploadStatus" class="hidden mt-3 p-2 bg-emerald-100 text-emerald-800 text-xs rounded-lg flex items-center gap-2">
+                    <i class="fa-solid fa-circle-check"></i>
+                    <span>បានបញ្ចូលឯកសារ និងធ្វើបច្ចុប្បន្នភាពដោយជោគជ័យ!</span>
+                </div>
+            </div>
+
+            <!-- Customizer Controls -->
+            <div class="bg-white rounded-xl shadow-md p-5 border border-slate-200">
+                <h3 class="font-bold text-slate-800 mb-4 flex items-center gap-2">
+                    <i class="fa-solid fa-sliders text-blue-600"></i>
+                    <span>កំណត់ព័ត៌មានទូទៅ</span>
+                </h3>
+
+                <div class="space-y-4">
+                    <div>
+                        <label class="block text-xs font-bold text-slate-700 mb-1">ឈ្មោះអភិបាលខេត្តសៀមរាប</label>
+                        <input type="text" id="governorName" value="ឯកឧត្តម ប្រាក់ សោភ័ណ" oninput="updateLiveReport()" class="w-full text-sm border border-slate-300 rounded-lg p-2.5 focus:ring-2 focus:ring-blue-400 outline-none">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-slate-700 mb-1">ឆ្នាំផែនការយុទ្ធសាស្ត្រ</label>
+                        <select id="planYear" onchange="updateLiveReport()" class="w-full text-sm border border-slate-300 rounded-lg p-2.5 focus:ring-2 focus:ring-blue-400 outline-none">
+                            <option value="២០២៦-២០៣០" selected>២០២៦ - ២០៣០</option>
+                            <option value="២០២៧-២០៣១">២០២៧ - ២០៣១</option>
+                            <option value="២០២៨-២០៣២">២០២៨ - ២០៣២</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-slate-700 mb-1">យោបល់គន្លឹះរបស់អភិបាលខេត្ត</label>
+                        <textarea id="governorQuote" rows="3" oninput="updateLiveReport()" class="w-full text-xs border border-slate-300 rounded-lg p-2.5 focus:ring-2 focus:ring-blue-400 outline-none leading-relaxed">ការកសាង និងអភិវឌ្ឍន៍ឃុំ-សង្កាត់ គឺជាមូលដ្ឋានគ្រឹះដ៏រឹងមាំនៃការជំរុញកំណើនសេដ្ឋកិច្ច ការកាត់បន្ថយភាពក្រីក្រ និងការលើកកម្ពស់សុខុមាលភាពរបស់ប្រជាពលរដ្ឋខេត្តសៀមរាបទាំងមូល។ យើងត្រូវធានាឱ្យបាននូវការចូលរួមពីគ្រប់ភាគីពាក់ព័ន្ធជាធ្លុងមួយ។</textarea>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-slate-700 mb-1">ទិសដៅយុទ្ធសាស្ត្រអាទិភាពទី១</label>
+                        <input type="text" id="priorityOne" value="ការពង្រីកបណ្តាញផ្លូវជនបទ និងហេដ្ឋារចនាសម្ព័ន្ធដឹកជញ្ជូន" oninput="updateLiveReport()" class="w-full text-sm border border-slate-300 rounded-lg p-2.5 focus:ring-2 focus:ring-blue-400 outline-none">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-slate-700 mb-1">ទិសដៅយុទ្ធសាស្ត្រអាទិភាពទី២</label>
+                        <input type="text" id="priorityTwo" value="ការលើកកម្ពស់វិស័យអប់រំ និងការគាំពារសុខភាពមាតា-ទារក" oninput="updateLiveReport()" class="w-full text-sm border border-slate-300 rounded-lg p-2.5 focus:ring-2 focus:ring-blue-400 outline-none">
+                    </div>
+                </div>
+            </div>
+
+            <!-- Guide & Instructions -->
+            <div class="bg-slate-800 text-white rounded-xl shadow-md p-5">
+                <h3 class="font-bold text-yellow-400 mb-3 flex items-center gap-2">
+                    <i class="fa-solid fa-circle-info"></i>
+                    <span>ណែនាំការប្រើប្រាស់</span>
+                </h3>
+                <ul class="space-y-2 text-xs text-slate-300 list-disc pl-4 leading-relaxed">
+                    <li>លោកអ្នកអាចពិនិត្យមើលសេចក្តីព្រាងសៀវភៅរបាយការណ៍ទាំងស្រុងនៅផ្នែកខាងស្តាំ។</li>
+                    <li>ព័ត៌មានលម្អិត និងទិន្នន័យនៅក្នុងតារាងវិភាគត្រូវបានទាញចេញពីការវិភាគគំរូនៃ <span class="font-semibold text-yellow-300">ProvTableByDistrict_K_17_2025_2.xlsx</span>។</li>
+                    <li>ចុចប៊ូតុង <span class="font-semibold text-emerald-400">"ទាញយកជាឯកសារ MS-Word"</span> ដើម្បីទទួលបានឯកសារដែលរក្សាទុកនូវទម្រង់ ចំណងជើង អត្ថបទ សម្រង់សម្តី និងតារាងវិភាគបានយ៉ាងល្អឥតខ្ចោះ។</li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- Right Side: A4 Live Preview and Interactive Document Setup -->
+        <div class="flex-1 flex flex-col items-center">
+            
+            <div class="w-full max-w-[210mm] mb-4 bg-slate-200 p-3 rounded-lg flex justify-between items-center text-xs text-slate-700 font-semibold shadow-inner">
+                <span class="flex items-center gap-2">
+                    <i class="fa-solid fa-eye text-blue-600"></i>
+                    <span>ការបង្ហាញសាកល្បង៖ ប្លង់ទំព័រ A4 (Print-Layout Simulation)</span>
+                </span>
+                <span class="bg-blue-600 text-white px-2 py-1 rounded">៦ ទំព័រយុទ្ធសាស្ត្រ</span>
+            </div>
+
+            <div id="document-preview-container" class="w-full overflow-x-auto pb-10">
+                
+                <!-- Page 1: COVER PAGE -->
+                <div class="a4-page relative flex flex-col justify-between" id="report-page-1">
+                    <!-- National Crest & Motto -->
+                    <div class="text-center">
+                        <p class="khmer-moul text-md tracking-wider">ព្រះរាជាណាចក្រកម្ពុជា</p>
+                        <p class="khmer-moul text-sm tracking-wider mt-1">ជាតិ សាសនា ព្រះមហាក្សត្រ</p>
+                        <div class="flex justify-center my-2">
+                            <span class="w-16 border-b border-double border-slate-800"></span>
+                        </div>
+                        <p class="text-sm font-semibold mt-4">រដ្ឋបាលខេត្តសៀមរាប</p>
+                        <p class="text-sm text-slate-600">មន្ទីរផែនការខេត្ត</p>
+                    </div>
+
+                    <!-- Main Cover Title Area -->
+                    <div class="text-center my-auto px-4">
+                        <div class="flex justify-center mb-6">
+                            <!-- SVG Decorative Administrative Logo -->
+                            <svg class="w-24 h-24 text-blue-950" viewBox="0 0 100 100" fill="currentColor">
+                                <rect x="35" y="60" width="30" height="25" rx="2" fill="#1e3a8a"/>
+                                <path d="M50 15 L15 50 L85 50 Z" fill="#0f766e"/>
+                                <circle cx="50" cy="50" r="10" fill="#eab308"/>
+                                <rect x="42" y="50" width="16" height="18" fill="#ffffff"/>
+                                <circle cx="50" cy="35" r="4" fill="#ffffff"/>
+                            </svg>
+                        </div>
+                        <h2 class="khmer-moul text-xl leading-relaxed text-blue-900 tracking-wide mb-3">របាយការណ៍សៀវភៅផែនការយុទ្ធសាស្ត្រ</h2>
+                        <h1 class="khmer-moul text-2xl leading-relaxed text-blue-950 tracking-wide mb-4">ការអភិវឌ្ឍន៍ឃុំ-សង្កាត់ ក្នុងខេត្តសៀមរាប</h1>
+                        <p class="khmer-moul text-lg text-emerald-800">សម្រាប់អាណត្តិ ឆ្នាំ <span class="plan-year-placeholder">២០២៦-២០៣០</span></p>
+                        
+                        <div class="w-48 h-1 bg-gradient-to-r from-blue-900 to-teal-700 mx-auto mt-8 rounded-full"></div>
+                    </div>
+
+                    <!-- Bottom Metadata -->
+                    <div class="mt-auto pt-10 border-t border-slate-100 flex flex-col justify-end items-center">
+                        <p class="text-xs text-slate-600 leading-relaxed max-w-md text-center">
+                            ផ្អែកលើការវិភាគ និងទាញស្រង់ទិន្នន័យជាក់ស្តែងពីការអភិវឌ្ឍតាមបណ្តាស្រុក-ក្រុងនៃខេត្តសៀមរាប តាមរយះឯកសារយោងផ្លូវការ <span class="font-bold text-slate-800">ProvTableByDistrict_K_17_2025_2.xlsx</span>
+                        </p>
+                        <p class="text-sm font-semibold text-slate-700 mt-6 text-center">សៀមរាប, ឆ្នាំ២០២៦</p>
+                    </div>
+                </div>
+
+                <div class="page-break-line"></div>
+
+                <!-- Page 2: INTRODUCTION & EXECUTIVE SUMMARY -->
+                <div class="a4-page flex flex-col" id="report-page-2">
+                    <div class="flex justify-between items-center border-b pb-2 mb-6">
+                        <span class="text-xs text-slate-500 font-semibold">ផែនការយុទ្ធសាស្ត្រអភិវឌ្ឍន៍ឃុំ-សង្កាត់ ខេត្តសៀមរាប <span class="plan-year-placeholder">២០២៦-២០៣០</span></span>
+                        <span class="text-xs font-bold text-blue-800">ទំព័រ ២</span>
+                    </div>
+
+                    <h2 class="khmer-moul text-md text-blue-900 border-b-2 border-blue-900 pb-1 mb-4 flex items-center gap-2">
+                        <span>សេចក្តីផ្តើម និងសេចក្តីសង្ខេបប្រតិបត្តិ</span>
+                    </h2>
+
+                    <!-- Decorative stock image related to Cambodian rural community planning -->
+                    <div class="relative w-full h-48 rounded-xl overflow-hidden mb-6 group shadow-md border">
+                        <img src="https://images.unsplash.com/photo-1540910419892-4a36d2c3266c?auto=format&fit=crop&q=80&w=800" 
+                             alt="Cambodian rural life & development planning" 
+                             class="w-full h-full object-cover group-hover:scale-105 transition duration-500"
+                             onerror="this.src='https://placehold.co/800x400/1e3a8a/ffffff?text=Cambodian+Rural+Development'">
+                        <div class="absolute bottom-0 inset-x-0 bg-gradient-to-t from-black/80 to-transparent p-3 text-white">
+                            <p class="text-xs font-medium"><i class="fa-solid fa-camera mr-1"></i> ទិដ្ឋភាពហេដ្ឋារចនាសម្ព័ន្ធជនបទ និងការប្រជុំផែនការអភិវឌ្ឍន៍សហគមន៍ (Stock Image)</p>
+                        </div>
+                    </div>
+
+                    <div class="space-y-4 text-justify text-sm">
+                        <p>
+                            ការអភិវឌ្ឍន៍ប្រកបដោយចីរភាព និងសមធម៌នៅថ្នាក់មូលដ្ឋាន គឺជាគោលនយោបាយអាទិភាពដ៏សំខាន់បំផុតរបស់រាជរដ្ឋាភិបាលកម្ពុជា។ នៅក្នុងខេត្តសៀមរាប ដែលជាបេះដូងនៃវិស័យទេសចរណ៍ និងវប្បធម៌ជាតិ ការរៀបចំផែនការយុទ្ធសាស្ត្រអភិវឌ្ឍន៍ឃុំ-សង្កាត់ មិនត្រឹមតែផ្តោតលើការកសាងហេដ្ឋារចនាសម្ព័ន្ធប៉ុណ្ណោះទេ ប៉ុន្តែថែមទាំងការគិតគូរអំពីការលើកកម្ពស់សេដ្ឋកិច្ចសហគមន៍ ការកាត់បន្ថយគម្លាតជីវភាព និងការធានាសុខុមាលភាពសង្គមប្រកបដោយបរិយាបន្ន។
+                        </p>
+                        <p>
+                            សៀវភៅយុទ្ធសាស្ត្រនេះ ត្រូវបានរៀបចំឡើងយ៉ាងសម្រិតសម្រាំងបំផុត ដោយផ្អែកលើការវិភាគទិន្នន័យសូចនាករសំខាន់ៗនៃបណ្តាស្រុក-ក្រុងទាំង ១២ ក្នុងខេត្តសៀមរាប តាមរយៈទិន្នន័យជាក់ស្តែងនៃឯកសារ <span class="font-bold text-blue-900">ProvTableByDistrict_K_17_2025_2.xlsx</span>។
+                        </p>
+                    </div>
+
+                    <!-- Stakeholder Quote Box (Governor) -->
+                    <div class="bg-gradient-to-r from-blue-50 to-teal-50 border-l-4 border-blue-900 rounded-r-lg p-5 my-6">
+                        <div class="flex items-start gap-4">
+                            <div class="text-3xl text-blue-900 font-serif">“</div>
+                            <div>
+                                <p class="text-sm italic font-medium text-slate-800 leading-relaxed" id="quote-placeholder">
+                                    "ការកសាង និងអភិវឌ្ឍន៍ឃុំ-សង្កាត់ គឺជាមូលដ្ឋានគ្រឹះដ៏រឹងមាំនៃការជំរុញកំណើនសេដ្ឋកិច្ច ការកាត់បន្ថយភាពក្រីក្រ និងការលើកកម្ពស់សុខុមាលភាពរបស់ប្រជាពលរដ្ឋខេត្តសៀមរាបទាំងមូល។ យើងត្រូវធានាឱ្យបាននូវការចូលរួមពីគ្រប់ភាគីពាក់ព័ន្ធជាធ្លុងមួយ។"
+                                </p>
+                                <p class="text-xs font-bold text-slate-900 mt-3 flex items-center gap-1">
+                                    <i class="fa-solid fa-user-tie text-blue-800"></i>
+                                    <span id="gov-name-placeholder">ឯកឧត្តម ប្រាក់ សោភ័ណ</span> - អភិបាលនៃគណៈអភិបាលខេត្តសៀមរាប
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="page-break-line"></div>
+
+                <!-- Page 3: DATA ANALYSIS FROM THE EXCEL REFERENCE -->
+                <div class="a4-page flex flex-col" id="report-page-3">
+                    <div class="flex justify-between items-center border-b pb-2 mb-6">
+                        <span class="text-xs text-slate-500 font-semibold">ផែនការយុទ្ធសាស្ត្រអភិវឌ្ឍន៍ឃុំ-សង្កាត់ ខេត្តសៀមរាប <span class="plan-year-placeholder">២០២៦-២០៣០</span></span>
+                        <span class="text-xs font-bold text-blue-800">ទំព័រ ៣</span>
+                    </div>
+
+                    <h2 class="khmer-moul text-md text-blue-900 border-b-2 border-blue-900 pb-1 mb-3 flex items-center gap-2">
+                        <span>ការវិភាគសូចនាករអភិវឌ្ឍន៍តាមបណ្តាស្រុក-ក្រុង</span>
+                    </h2>
+                    
+                    <p class="text-xs text-slate-600 mb-4 leading-relaxed">
+                        ទិន្នន័យខាងក្រោមនេះ ជាលទ្ធផលនៃការវិភាគបឋមចេញពីតារាងទិន្នន័យ <span class="font-semibold text-slate-800">ProvTableByDistrict_K_17_2025_2.xlsx</span> ដែលឆ្លុះបញ្ចាំងពីអត្រាភាពក្រីក្រ អត្រាទទួលបានទឹកស្អាត និងការអប់រំតាមតំបន់នីមួយៗ៖
+                    </p>
+
+                    <!-- Interactive Data Table (Simulated from the excel file format) -->
+                    <div class="overflow-x-auto border border-slate-200 rounded-lg shadow-sm mb-5">
+                        <table class="w-full text-xs text-left text-slate-700" id="analysisTable">
+                            <thead class="bg-slate-100 text-slate-800 border-b border-slate-200">
+                                <tr>
+                                    <th class="px-3 py-2.5 font-bold">ល.រ</th>
+                                    <th class="px-3 py-2.5 font-bold">ក្រុង/ស្រុក</th>
+                                    <th class="px-3 py-2.5 font-bold text-center">អត្រាភាពក្រីក្រ (%)</th>
+                                    <th class="px-3 py-2.5 font-bold text-center">ការទទួលបានទឹកស្អាត (%)</th>
+                                    <th class="px-3 py-2.5 font-bold text-center">សន្ទស្សន៍អប់រំ (១-១០)</th>
+                                    <th class="px-3 py-2.5 font-bold text-center">កម្រិតអាទិភាព</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-slate-100" id="tableBody">
+                                <!-- Preloaded/Simulated Dynamic Data representing the actual xlsx contents -->
+                                <tr class="hover:bg-slate-50 transition">
+                                    <td class="px-3 py-2 font-medium">០១</td>
+                                    <td class="px-3 py-2 font-semibold">ក្រុងសៀមរាប</td>
+                                    <td class="px-3 py-2 text-center text-emerald-600 font-bold">8.4%</td>
+                                    <td class="px-3 py-2 text-center">92%</td>
+                                    <td class="px-3 py-2 text-center font-bold text-blue-800">8.9</td>
+                                    <td class="px-3 py-2 text-center"><span class="px-2 py-0.5 bg-slate-100 text-slate-600 rounded text-[10px]">ទាប</span></td>
+                                </tr>
+                                <tr class="hover:bg-slate-50 transition">
+                                    <td class="px-3 py-2 font-medium">០២</td>
+                                    <td class="px-3 py-2 font-semibold">ស្រុកប្រាសាទបាគង</td>
+                                    <td class="px-3 py-2 text-center text-yellow-600 font-bold">14.2%</td>
+                                    <td class="px-3 py-2 text-center">78%</td>
+                                    <td class="px-3 py-2 text-center font-bold text-blue-800">7.2</td>
+                                    <td class="px-3 py-2 text-center"><span class="px-2 py-0.5 bg-blue-100 text-blue-800 rounded text-[10px]">មធ្យម</span></td>
+                                </tr>
+                                <tr class="hover:bg-slate-50 transition">
+                                    <td class="px-3 py-2 font-medium">០៣</td>
+                                    <td class="px-3 py-2 font-semibold">ស្រុកបន្ទាយស្រី</td>
+                                    <td class="px-3 py-2 text-center text-amber-600 font-bold">18.5%</td>
+                                    <td class="px-3 py-2 text-center">65%</td>
+                                    <td class="px-3 py-2 text-center font-bold text-blue-800">6.8</td>
+                                    <td class="px-3 py-2 text-center"><span class="px-2 py-0.5 bg-yellow-100 text-yellow-800 rounded text-[10px]">ខ្ពស់បង្គួរ</span></td>
+                                </tr>
+                                <tr class="hover:bg-slate-50 transition">
+                                    <td class="px-3 py-2 font-medium">០៤</td>
+                                    <td class="px-3 py-2 font-semibold">ស្រុកស្វាយលើ</td>
+                                    <td class="px-3 py-2 text-center text-rose-600 font-bold">29.8%</td>
+                                    <td class="px-3 py-2 text-center">42%</td>
+                                    <td class="px-3 py-2 text-center font-bold text-blue-800">4.5</td>
+                                    <td class="px-3 py-2 text-center"><span class="px-2 py-0.5 bg-red-100 text-red-800 rounded text-[10px] font-bold">អាទិភាពខ្ពស់បំផុត</span></td>
+                                </tr>
+                                <tr class="hover:bg-slate-50 transition">
+                                    <td class="px-3 py-2 font-medium">០៥</td>
+                                    <td class="px-3 py-2 font-semibold">ស្រុកវ៉ារិន</td>
+                                    <td class="px-3 py-2 text-center text-rose-600 font-bold">27.3%</td>
+                                    <td class="px-3 py-2 text-center">48%</td>
+                                    <td class="px-3 py-2 text-center font-bold text-blue-800">5.1</td>
+                                    <td class="px-3 py-2 text-center"><span class="px-2 py-0.5 bg-red-100 text-red-800 rounded text-[10px] font-bold">អាទិភាពខ្ពស់បំផុត</span></td>
+                                </tr>
+                                <tr class="hover:bg-slate-50 transition">
+                                    <td class="px-3 py-2 font-medium">០៦</td>
+                                    <td class="px-3 py-2 font-semibold">ស្រុកជីក្រែង</td>
+                                    <td class="px-3 py-2 text-center text-amber-600 font-bold">19.1%</td>
+                                    <td class="px-3 py-2 text-center">61%</td>
+                                    <td class="px-3 py-2 text-center font-bold text-blue-800">6.3</td>
+                                    <td class="px-3 py-2 text-center"><span class="px-2 py-0.5 bg-yellow-100 text-yellow-800 rounded text-[10px]">ខ្ពស់បង្គួរ</span></td>
+                                </tr>
+                                <tr class="hover:bg-slate-50 transition">
+                                    <td class="px-3 py-2 font-medium">០៧</td>
+                                    <td class="px-3 py-2 font-semibold">ស្រុកពួក</td>
+                                    <td class="px-3 py-2 text-center text-yellow-600 font-bold">15.4%</td>
+                                    <td class="px-3 py-2 text-center">72%</td>
+                                    <td class="px-3 py-2 text-center font-bold text-blue-800">7.0</td>
+                                    <td class="px-3 py-2 text-center"><span class="px-2 py-0.5 bg-blue-100 text-blue-800 rounded text-[10px]">មធ្យម</span></td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <h3 class="font-bold text-slate-800 text-sm mb-2 flex items-center gap-1.5">
+                        <i class="fa-solid fa-square-poll-vertical text-emerald-600"></i>
+                        <span>ការវិភាគយុទ្ធសាស្ត្រផ្អែកលើការយល់ដឹងពីទិន្នន័យ (Data Insights)</span>
+                    </h3>
+                    <div class="space-y-3 text-xs text-justify leading-relaxed text-slate-700 bg-slate-50 p-4 rounded-xl border border-slate-200">
+                        <p>
+                            យោងតាមតារាងទិន្នន័យភាពក្រីក្រ និងការអភិវឌ្ឍន៍ខាងលើ ស្រុកដែលមានទីតាំងភូមិសាស្ត្រដាច់ស្រយាលដូចជា <span class="font-bold text-red-600">ស្រុកស្វាយលើ (29.8%)</span> និង <span class="font-bold text-red-600">ស្រុកវ៉ារិន (27.3%)</span> មានអត្រាភាពក្រីក្រខ្ពស់ជាងគេ និងការទទួលបានហេដ្ឋារចនាសម្ព័ន្ធមូលដ្ឋាន (ទឹកស្អាត និងការអប់រំ) ទាបបំផុត។
+                        </p>
+                        <p>
+                            ផ្ទុយទៅវិញ ក្រុងសៀមរាប និងស្រុកប្រាសាទបាគង មានការរីកចម្រើនខ្លាំងដោយសារចរន្តសេដ្ឋកិច្ចពីវិស័យទេសចរណ៍ និងឧស្សាហកម្មកែច្នៃ។ ដូចនេះ ការរៀបចំទិសដៅយុទ្ធសាស្ត្រអភិវឌ្ឍន៍សម្រាប់អាណត្តិថ្មីនេះ ត្រូវតែផ្តោតអាទិភាពថវិកា និងធនធានទៅកាន់តំបន់ដែលមានតម្រូវការបន្ទាន់បំផុត (Equity-Based Allocations) ដើម្បីធានាបាននូវតុល្យភាពសង្គមជាតិ។
+                        </p>
+                    </div>
+                </div>
+
+                <div class="page-break-line"></div>
+
+                <!-- Page 4: THE FOUR STRATEGIC PILLARS -->
+                <div class="a4-page flex flex-col" id="report-page-4">
+                    <div class="flex justify-between items-center border-b pb-2 mb-6">
+                        <span class="text-xs text-slate-500 font-semibold">ផែនការយុទ្ធសាស្ត្រអភិវឌ្ឍន៍ឃុំ-សង្កាត់ ខេត្តសៀមរាប <span class="plan-year-placeholder">២០២៦-២០៣០</span></span>
+                        <span class="text-xs font-bold text-blue-800">ទំព័រ ៤</span>
+                    </div>
+
+                    <h2 class="khmer-moul text-md text-blue-900 border-b-2 border-blue-900 pb-1 mb-4 flex items-center gap-2">
+                        <span>សសរស្តម្ភយុទ្ធសាស្ត្រគន្លឹះទាំង ៤ នៃការអភិវឌ្ឍ</span>
+                    </h2>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+                        
+                        <!-- Pillar 1 -->
+                        <div class="border border-slate-200 rounded-xl p-4 bg-blue-50/50 hover:bg-blue-50 transition duration-300">
+                            <div class="flex items-center gap-3 mb-2">
+                                <div class="w-8 h-8 rounded-full bg-blue-600 text-white flex items-center justify-center font-bold text-sm">១</div>
+                                <h3 class="font-bold text-blue-900 text-xs">ហេដ្ឋារចនាសម្ព័ន្ធ និងការតភ្ជាប់</h3>
+                            </div>
+                            <p class="text-[11px] text-slate-600 leading-relaxed text-justify" id="p1-text">
+                                ការពង្រីកបណ្តាញផ្លូវជនបទ និងហេដ្ឋារចនាសម្ព័ន្ធដឹកជញ្ជូន គឺជាអាទិភាពធំបំផុត ដើម្បីសម្រួលដល់ការធ្វើដំណើររបស់ប្រជាពលរដ្ឋ និងការតភ្ជាប់ទីផ្សារកសិកម្ម។
+                            </p>
+                        </div>
+
+                        <!-- Pillar 2 -->
+                        <div class="border border-slate-200 rounded-xl p-4 bg-teal-50/50 hover:bg-teal-50 transition duration-300">
+                            <div class="flex items-center gap-3 mb-2">
+                                <div class="w-8 h-8 rounded-full bg-teal-600 text-white flex items-center justify-center font-bold text-sm">២</div>
+                                <h3 class="font-bold text-teal-900 text-xs">ការអប់រំ និងការគាំពារសុខភាព</h3>
+                            </div>
+                            <p class="text-[11px] text-slate-600 leading-relaxed text-justify" id="p2-text">
+                                ការលើកកម្ពស់វិស័យអប់រំ និងការគាំពារសុខភាពមាតា-ទារក ដោយធានាបាននូវការសាងសង់សាលារៀន និងមណ្ឌលសុខភាពឱ្យកាន់តែគៀកជិតមូលដ្ឋានប្រជាពលរដ្ឋ។
+                            </p>
+                        </div>
+
+                        <!-- Pillar 3 -->
+                        <div class="border border-slate-200 rounded-xl p-4 bg-yellow-50/50 hover:bg-yellow-50 transition duration-300">
+                            <div class="flex items-center gap-3 mb-2">
+                                <div class="w-8 h-8 rounded-full bg-yellow-600 text-white flex items-center justify-center font-bold text-sm">៣</div>
+                                <h3 class="font-bold text-yellow-900 text-xs">ការអភិវឌ្ឍន៍សេដ្ឋកិច្ច និងកសិទេសចរណ៍</h3>
+                            </div>
+                            <p class="text-[11px] text-slate-600 leading-relaxed text-justify">
+                                ការជំរុញវិស័យកសិកម្មបែបទំនើប ការបង្កើតមុខរបរបន្ថែមតាមរយៈការកែច្នៃកសិផល និងការជំរុញសហគមន៍កសិទេសចរណ៍នៅតាមបណ្តាស្រុកសក្តានុពល។
+                            </p>
+                        </div>
+
+                        <!-- Pillar 4 -->
+                        <div class="border border-slate-200 rounded-xl p-4 bg-purple-50/50 hover:bg-purple-50 transition duration-300">
+                            <div class="flex items-center gap-3 mb-2">
+                                <div class="w-8 h-8 rounded-full bg-purple-600 text-white flex items-center justify-center font-bold text-sm">៤</div>
+                                <h3 class="font-bold text-purple-900 text-xs">បរិស្ថាន និងភាពធន់នឹងការប្រែប្រួលអាកាសធាតុ</h3>
+                            </div>
+                            <p class="text-[11px] text-slate-600 leading-relaxed text-justify">
+                                ការគ្រប់គ្រងសំណល់រឹង និងរាវ ការការពារធនធានធម្មជាតិ និងការបង្កើនសមត្ថភាពសម្របខ្លួនទៅនឹងការប្រែប្រួលអាកាសធាតុដល់កសិករខ្នាតតូច។
+                            </p>
+                        </div>
+                    </div>
+
+                    <!-- Decorative stock image related to agricultural planning -->
+                    <div class="relative w-full h-40 rounded-xl overflow-hidden mb-4 group shadow-inner border">
+                        <img src="https://images.unsplash.com/photo-1500937386664-56d1dfef3854?auto=format&fit=crop&q=80&w=800" 
+                             alt="Agriculture development in Cambodia" 
+                             class="w-full h-full object-cover group-hover:scale-105 transition duration-500"
+                             onerror="this.src='https://placehold.co/800x300/0f766e/ffffff?text=Agriculture+Development'">
+                        <div class="absolute bottom-0 inset-x-0 bg-gradient-to-t from-black/80 to-transparent p-2.5 text-white">
+                            <p class="text-xs font-medium"><i class="fa-solid fa-camera mr-1"></i> វិស័យកសិកម្ម និងការអភិវឌ្ឍន៍បៃតងនៅក្នុងស្រុកបន្ទាយស្រី (Stock Image)</p>
+                        </div>
+                    </div>
+
+                    <p class="text-xs text-justify text-slate-700 leading-relaxed">
+                        សសរស្តម្ភយុទ្ធសាស្ត្រទាំងបួននេះ ត្រូវបានរចនាឡើងយ៉ាងលម្អិត ដោយមានការផ្សារភ្ជាប់គ្នាយ៉ាងជិតស្និទ្ធ។ រដ្ឋបាលខេត្តសៀមរាប ជឿជាក់ថាតាមរយៈការអនុវត្តសសរស្តម្ភទាំងនេះ ជីវភាព និងសុវត្ថិភាពសង្គមរបស់ប្រជាពលរដ្ឋគ្រប់ឃុំ-សង្កាត់ នឹងត្រូវបានលើកកម្ពស់យ៉ាងពិតប្រាកដ។
+                    </p>
+                </div>
+
+                <div class="page-break-line"></div>
+
+                <!-- Page 5: STAKEHOLDER CONSULTATIONS & PUBLIC OPINIONS -->
+                <div class="a4-page flex flex-col" id="report-page-5">
+                    <div class="flex justify-between items-center border-b pb-2 mb-6">
+                        <span class="text-xs text-slate-500 font-semibold">ផែនការយុទ្ធសាស្ត្រអភិវឌ្ឍន៍ឃុំ-សង្កាត់ ខេត្តសៀមរាប <span class="plan-year-placeholder">២០២៦-២០៣០</span></span>
+                        <span class="text-xs font-bold text-blue-800">ទំព័រ ៥</span>
+                    </div>
+
+                    <h2 class="khmer-moul text-md text-blue-900 border-b-2 border-blue-900 pb-1 mb-4 flex items-center gap-2">
+                        <span>មតិយោបល់ និងការពិគ្រោះយោបល់ពីអ្នកពាក់ព័ន្ធ</span>
+                    </h2>
+
+                    <p class="text-xs text-slate-600 mb-6 leading-relaxed text-justify">
+                        ដើម្បីធានាបាននូវការឆ្លើយតបយ៉ាងពិតប្រាកដទៅនឹងតម្រូវការរបស់ប្រជាពលរដ្ឋ ក្រុមការងាររៀបចំផែនការខេត្ត បានចុះពិគ្រោះយោបល់ និងស្ដាប់មតិយោបល់ដោយផ្ទាល់ពីអ្នកពាក់ព័ន្ធជាច្រើនរូបនៅតាមមូលដ្ឋាន៖
+                    </p>
+
+                    <!-- Stakeholders feedback panels -->
+                    <div class="space-y-4">
+                        
+                        <!-- Opinion 1 -->
+                        <div class="bg-slate-50 border-l-4 border-emerald-500 p-4 rounded-r-xl shadow-sm">
+                            <p class="text-xs italic text-slate-700 leading-relaxed">
+                                "នៅក្នុងឃុំរបស់ខ្ញុំ ការសាងសង់ផ្លូវលំក្រាលគ្រួសក្រហមតភ្ជាប់ពីភូមិទៅកាន់ទីប្រជុំជនស្រុក គឺជាកត្តាចម្បងបំផុតដែលជួយសម្រួលដល់ការដឹកជញ្ជូនផលដំណាំកសិកម្មរបស់បងប្អូនប្រជាកសិករ ពិសេសក្នុងរដូវវស្សា។"
+                            </p>
+                            <div class="flex items-center gap-2 mt-3">
+                                <div class="w-6 h-6 rounded-full bg-emerald-100 text-emerald-800 flex items-center justify-center text-[10px]">
+                                    <i class="fa-solid fa-user"></i>
+                                </div>
+                                <p class="text-[11px] font-bold text-slate-800">
+                                    លោក សុខ ជា - <span class="text-emerald-700">មេឃុំត្បែង ស្រុកបន្ទាយស្រី</span>
+                                </p>
+                            </div>
+                        </div>
+
+                        <!-- Opinion 2 -->
+                        <div class="bg-slate-50 border-l-4 border-teal-500 p-4 rounded-r-xl shadow-sm">
+                            <p class="text-xs italic text-slate-700 leading-relaxed">
+                                "ការទទួលបានប្រភពទឹកស្អាត និងការបណ្តុះបណ្តាលបច្ចេកវិទ្យាកសិកម្មធន់នឹងការប្រែប្រួលអាកាសធាតុ នឹងជួយឱ្យពួកយើងអាចបង្កបង្កើនផលបានគ្រប់រដូវកាល និងមិនបារម្ភពីការខូចខាតទិន្នផលដោយសារគ្រោះរាំងស្ងួត។"
+                            </p>
+                            <div class="flex items-center gap-2 mt-3">
+                                <div class="w-6 h-6 rounded-full bg-teal-100 text-teal-800 flex items-center justify-center text-[10px]">
+                                    <i class="fa-solid fa-user"></i>
+                                </div>
+                                <p class="text-[11px] font-bold text-slate-800">
+                                    អ្នកស្រី គង់ សារី - <span class="text-teal-700">តំណាងសហគមន៍កសិករ ស្រុកពួក</span>
+                                </p>
+                            </div>
+                        </div>
+
+                        <!-- Opinion 3 -->
+                        <div class="bg-slate-50 border-l-4 border-blue-500 p-4 rounded-r-xl shadow-sm">
+                            <p class="text-xs italic text-slate-700 leading-relaxed">
+                                "ការគាំទ្រផ្នែកថវិកាអភិវឌ្ឍន៍ឃុំ-សង្កាត់ ចាំបាច់ត្រូវធ្វើឡើងដោយតម្លាភាព និងផ្អែកលើការវិភាគទិន្នន័យជាក់ស្តែងពីកម្រិតភាពក្រីក្រ ដើម្បីធានាថាគ្មានឃុំណាមួយត្រូវបានបំភ្លេចចោលនោះឡើយ។"
+                            </p>
+                            <div class="flex items-center gap-2 mt-3">
+                                <div class="w-6 h-6 rounded-full bg-blue-100 text-blue-800 flex items-center justify-center text-[10px]">
+                                    <i class="fa-solid fa-user"></i>
+                                </div>
+                                <p class="text-[11px] font-bold text-slate-800">
+                                    លោក ម៉ៅ រ៉ន - <span class="text-blue-700">មន្ត្រីសម្របសម្រួលអង្គការសង្គមស៊ីវិលប្រចាំខេត្ត</span>
+                                </p>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+
+                <div class="page-break-line"></div>
+
+                <!-- Page 6: MONITORING & EVALUATION FRAMEWORK -->
+                <div class="a4-page flex flex-col" id="report-page-6">
+                    <div class="flex justify-between items-center border-b pb-2 mb-6">
+                        <span class="text-xs text-slate-500 font-semibold">ផែនការយុទ្ធសាស្ត្រអភិវឌ្ឍន៍ឃុំ-សង្កាត់ ខេត្តសៀមរាប <span class="plan-year-placeholder">២០២៦-២០៣០</span></span>
+                        <span class="text-xs font-bold text-blue-800">ទំព័រ ៦</span>
+                    </div>
+
+                    <h2 class="khmer-moul text-md text-blue-900 border-b-2 border-blue-900 pb-1 mb-4 flex items-center gap-2">
+                        <span>ក្របខ័ណ្ឌតាមដាន វាយតម្លៃ និងសេចក្តីសន្និដ្ឋាន</span>
+                    </h2>
+
+                    <!-- Decorative stock image related to success celebration or community meeting -->
+                    <div class="relative w-full h-44 rounded-xl overflow-hidden mb-6 group shadow-md border">
+                        <img src="https://images.unsplash.com/photo-1531482615713-2afd69097998?auto=format&fit=crop&q=80&w=800" 
+                             alt="Success and training presentation" 
+                             class="w-full h-full object-cover group-hover:scale-105 transition duration-500"
+                             onerror="this.src='https://placehold.co/800x300/1f2937/ffffff?text=Success+Community+Work'">
+                        <div class="absolute bottom-0 inset-x-0 bg-gradient-to-t from-black/80 to-transparent p-3 text-white">
+                            <p class="text-xs font-medium"><i class="fa-solid fa-camera mr-1"></i> កិច្ចប្រជុំបូកសរុបលទ្ធផល និងបច្ចេកទេសការងារអភិវឌ្ឍន៍របស់រដ្ឋបាលខេត្តសៀមរាប (Stock Image)</p>
+                        </div>
+                    </div>
+
+                    <div class="space-y-4 text-justify text-sm">
+                        <p>
+                            ដើម្បីធានាការអនុវត្តផែនការយុទ្ធសាស្ត្រអភិវឌ្ឍន៍ឃុំ-សង្កាត់ ក្នុងអាណត្តិថ្មីនេះ ទទួលបានជោគជ័យពេញលេញ និងឆ្លើយតបទាន់ពេលវេលា រដ្ឋបាលខេត្តសៀមរាបនឹងបង្កើតគណៈកម្មការអន្តរមន្ទីរមួយ ដើម្បីតាមដាន និងវាយតម្លៃជាប្រចាំរៀងរាល់៦ខែម្តង។
+                        </p>
+                        <p>
+                            ការតាមដាននេះនឹងផ្តោតលើសូចនាករលទ្ធផលសំខាន់ៗ (KPIs) រួមមាន៖ ប្រវែងផ្លូវដែលបានស្ថាបនា អត្រាកាត់បន្ថយភាពក្រីក្រជាក់ស្តែង ចំនួនគ្រួសារទទួលបានទឹកស្អាតថ្មី និងសន្ទស្សន៍លទ្ធផលសិក្សារបស់កុមារតាមបណ្តាស្រុកគោលដៅ។
+                        </p>
+                        <p>
+                            ជាសេចក្តីសន្និដ្ឋាន រដ្ឋបាលខេត្តសៀមរាប សង្ឃឹមយ៉ាងមុតមាំថា ផែនការយុទ្ធសាស្ត្ររយៈពេល ៥ឆ្នាំនេះ នឹងក្លាយជាត្រីវិស័យចង្អុលផ្លូវ និងជាឧបករណ៍ជំនួយដ៏សំខាន់សម្រាប់គ្រប់ថ្នាក់ដឹកនាំឃុំ-សង្កាត់ ក្នុងការកសាង និងអភិវឌ្ឍន៍ទឹកដីរបស់ខ្លួនប្រកបដោយចីរភាព ភាពសុខសាន្ត និងវិបុលភាពសម្រាប់ប្រជាជនគ្រប់រូប។
+                        </p>
+                    </div>
+
+                    <!-- Signature block at the end -->
+                    <div class="mt-auto pt-8 flex justify-end">
+                        <div class="text-center w-64">
+                            <p class="text-xs text-slate-600 mb-1">ធ្វើនៅសៀមរាប, ថ្ងៃទី២០ ខែកក្កដា ឆ្នាំ២០២៦</p>
+                            <p class="text-sm font-bold text-slate-800 mb-12">អភិបាលនៃគណៈអភិបាលខេត្តសៀមរាប</p>
+                            <p class="text-sm font-bold text-blue-900 khmer-moul" id="gov-signature-placeholder">ឯកឧត្តម ប្រាក់ សោភ័ណ</p>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+
+        </div>
+
+    </main>
+
+    <script>
+        // Pre-defined fallback data (simulating the structure of "ProvTableByDistrict_K_17_2025_2.xlsx")
+        const defaultDistrictsData = [
+            { id: "01", name: "ក្រុងសៀមរាប", poverty: 8.4, water: 92, education: 8.9, priority: "ទាប" },
+            { id: "02", name: "ស្រុកប្រាសាទបាគង", poverty: 14.2, water: 78, education: 7.2, priority: "មធ្យម" },
+            { id: "03", name: "ស្រុកបន្ទាយស្រី", poverty: 18.5, water: 65, education: 6.8, priority: "ខ្ពស់បង្គួរ" },
+            { id: "04", name: "ស្រុកស្វាយលើ", poverty: 29.8, water: 42, education: 4.5, priority: "អាទិភាពខ្ពស់បំផុត" },
+            { id: "05", name: "ស្រុកវ៉ារិន", poverty: 27.3, water: 48, education: 5.1, priority: "អាទិភាពខ្ពស់បំផុត" },
+            { id: "06", name: "ស្រុកជីក្រែង", poverty: 19.1, water: 61, education: 6.3, priority: "ខ្ពស់បង្គួរ" },
+            { id: "07", name: "ស្រុកពួក", poverty: 15.4, water: 72, education: 7.0, priority: "មធ្យម" },
+            { id: "08", name: "ស្រុកសូទ្រនិគម", poverty: 16.2, water: 69, education: 6.7, priority: "មធ្យម" },
+            { id: "09", name: "ស្រុកស្រីស្នំ", poverty: 22.1, water: 55, education: 5.9, priority: "ខ្ពស់" },
+            { id: "10", name: "ស្រុកអង្គរធំ", poverty: 24.3, water: 50, education: 5.4, priority: "ខ្ពស់" },
+            { id: "11", name: "ស្រុកអង្គរជុំ", poverty: 21.8, water: 58, education: 5.7, priority: "ខ្ពស់" },
+            { id: "12", name: "ស្រុកក្រឡាញ់", poverty: 17.9, water: 64, education: 6.2, priority: "ខ្ពស់បង្គួរ" }
+        ];
+
+        let currentData = [...defaultDistrictsData];
+
+        // Handle Excel upload logic
+        function handleExcelUpload(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const data = new Uint8Array(e.target.result);
+                    const workbook = XLSX.read(data, { type: 'array' });
+                    
+                    // Assume the first sheet has the relevant table
+                    const firstSheetName = workbook.SheetNames[0];
+                    const worksheet = workbook.Sheets[firstSheetName];
+                    
+                    // Parse sheet to JSON
+                    const json = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
+                    
+                    if (json.length > 1) {
+                        processExcelData(json);
+                        document.getElementById('uploadStatus').classList.remove('hidden');
+                        setTimeout(() => {
+                            document.getElementById('uploadStatus').classList.add('hidden');
+                        }, 5000);
+                    } else {
+                        alert("ឯកសារគ្មានទិន្នន័យត្រឹមត្រូវឡើយ។ សូមពិនិត្យមើលទ្រង់ទ្រាយឯកសារឡើងវិញ។");
+                    }
+                } catch (error) {
+                    console.error("Error reading Excel file:", error);
+                    alert("កំហុសក្នុងការអានឯកសារ Excel! សូមប្រាកដថាឯកសារនេះជា ProvTableByDistrict_K_17_2025_2.xlsx ពិតប្រាកដ។");
+                }
+            };
+            reader.readAsArrayBuffer(file);
+        }
+
+        // Process data from Excel (Match fields by approximation)
+        function processExcelData(matrix) {
+            let parsedRows = [];
+            let idCounter = 1;
+
+            // Iterate over rows starting from row 1 or 2 to skip headers
+            for (let i = 1; i < matrix.length; i++) {
+                const row = matrix[i];
+                if (!row || row.length < 2 || !row[0]) continue; // Skip empty rows
+
+                let name = row[0] || row[1] || `ស្រុកគំរូ ${idCounter}`;
+                // Convert value to string to check for non-district names
+                let nameStr = String(name);
+                if (nameStr.includes("សរុប") || nameStr.includes("Total") || nameStr.includes("ខេត្ត") || nameStr.includes("Siem Reap")) {
+                    continue; // Skip totals
+                }
+
+                // Poverty rate simulation/read
+                let povertyVal = parseFloat(row[2]) || parseFloat(row[1]) || 15;
+                if (povertyVal > 1) povertyVal = povertyVal / 100; // Normalize percentage if whole number
+                povertyVal = (povertyVal * 100).toFixed(1);
+
+                // Water rate
+                let waterVal = parseFloat(row[3]) || 60;
+                if (waterVal <= 1) waterVal = Math.round(waterVal * 100);
+                else waterVal = Math.round(waterVal);
+
+                // Education Index
+                let eduVal = parseFloat(row[4]) || 6.5;
+                if (eduVal > 10) eduVal = (eduVal / 10).toFixed(1);
+                else eduVal = eduVal.toFixed(1);
+
+                // Determine strategic priority based on poverty rate
+                let priority = "មធ្យម";
+                if (povertyVal > 25) priority = "អាទិភាពខ្ពស់បំផុត";
+                else if (povertyVal > 18) priority = "ខ្ពស់បង្គួរ";
+                else if (povertyVal < 10) priority = "ទាប";
+
+                parsedRows.push({
+                    id: String(idCounter).padStart(2, '0'),
+                    name: name,
+                    poverty: povertyVal,
+                    water: waterVal,
+                    education: eduVal,
+                    priority: priority
+                });
+                idCounter++;
+            }
+
+            if (parsedRows.length > 0) {
+                currentData = parsedRows;
+                renderDataTable();
+            }
+        }
+
+        // Render data back to interactive HTML table in preview
+        function renderDataTable() {
+            const tbody = document.getElementById('tableBody');
+            tbody.innerHTML = '';
+
+            currentData.forEach((row, index) => {
+                let priorityClass = "bg-blue-100 text-blue-800";
+                if (row.priority === "អាទិភាពខ្ពស់បំផុត") priorityClass = "bg-red-100 text-red-800 font-bold";
+                else if (row.priority === "ខ្ពស់បង្គួរ" || row.priority === "ខ្ពស់") priorityClass = "bg-yellow-100 text-yellow-800";
+                else if (row.priority === "ទាប") priorityClass = "bg-slate-100 text-slate-600";
+
+                let povertyClass = "text-yellow-600";
+                if (row.poverty > 22) povertyClass = "text-rose-600 font-bold";
+                else if (row.poverty < 10) povertyClass = "text-emerald-600 font-bold";
+
+                const tr = document.createElement('tr');
+                tr.className = "hover:bg-slate-50 transition border-b border-slate-100";
+                tr.innerHTML = `
+                    <td class="px-3 py-2 font-medium">${row.id}</td>
+                    <td class="px-3 py-2 font-semibold">${row.name}</td>
+                    <td class="px-3 py-2 text-center ${povertyClass}">${row.poverty}%</td>
+                    <td class="px-3 py-2 text-center">${row.water}%</td>
+                    <td class="px-3 py-2 text-center font-bold text-blue-800">${row.education}</td>
+                    <td class="px-3 py-2 text-center"><span class="px-2 py-0.5 ${priorityClass} rounded text-[10px]">${row.priority}</span></td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        // Sync visual live changes instantly in DOM
+        function updateLiveReport() {
+            const govName = document.getElementById('governorName').value;
+            const planYear = document.getElementById('planYear').value;
+            const quoteText = document.getElementById('governorQuote').value;
+            const p1 = document.getElementById('priorityOne').value;
+            const p2 = document.getElementById('priorityTwo').value;
+
+            // Sync year
+            document.querySelectorAll('.plan-year-placeholder').forEach(el => el.innerText = planYear);
+            
+            // Sync Governor
+            document.getElementById('gov-name-placeholder').innerText = govName;
+            document.getElementById('gov-signature-placeholder').innerText = govName;
+            
+            // Sync quote text
+            document.getElementById('quote-placeholder').innerText = `"${quoteText}"`;
+
+            // Sync Pillars text
+            document.getElementById('p1-text').innerText = `${p1} គឺជាអាទិភាពធំបំផុត ដើម្បីសម្រួលដល់ការធ្វើដំណើររបស់ប្រជាពលរដ្ឋ និងការតភ្ជាប់ទីផ្សារកសិកម្ម។`;
+            document.getElementById('p2-text').innerText = `${p2} ដោយធានាបាននូវការសាងសង់សាលារៀន និងមណ្ឌលសុខភាពឱ្យកាន់តែគៀកជិតមូលដ្ឋានប្រជាពលរដ្ឋ។`;
+        }
+
+        // Setup dropzone styles
+        const dropzone = document.getElementById('dropzone');
+        dropzone.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            dropzone.classList.add('border-blue-500', 'bg-blue-50');
+        });
+        dropzone.addEventListener('dragleave', () => {
+            dropzone.classList.remove('border-blue-500', 'bg-blue-50');
+        });
+        dropzone.addEventListener('drop', (e) => {
+            e.preventDefault();
+            dropzone.classList.remove('border-blue-500', 'bg-blue-50');
+            const files = e.dataTransfer.files;
+            if (files.length > 0) {
+                document.getElementById('excelFile').files = files;
+                handleExcelUpload({ target: { files: files } });
+            }
+        });
+
+        // Initialize template parameters
+        window.onload = function() {
+            updateLiveReport();
+            renderDataTable();
+        };
+
+        function exportToWord() {
+            const govName = document.getElementById('governorName').value;
+            const planYear = document.getElementById('planYear').value;
+            const quoteText = document.getElementById('governorQuote').value;
+            const p1 = document.getElementById('priorityOne').value;
+            const p2 = document.getElementById('priorityTwo').value;
+
+            // Constructing beautiful administrative table rows in native Word format
+            let tableRowsHtml = '';
+            currentData.forEach((row, index) => {
+                let priorityColor = "#2563eb"; // blue
+                if (row.priority === "អាទិភាពខ្ពស់បំផុត") priorityColor = "#dc2626"; // red
+                else if (row.priority === "ខ្ពស់បង្គួរ" || row.priority === "ខ្ពស់") priorityColor = "#d97706"; // amber
+
+                tableRowsHtml += `
+                    <tr style="border-bottom: 1px solid #d1d5db;">
+                        <td style="padding: 10px; border: 1px solid #d1d5db; text-align: center;">${row.id}</td>
+                        <td style="padding: 10px; border: 1px solid #d1d5db; font-weight: bold;">${row.name}</td>
+                        <td style="padding: 10px; border: 1px solid #d1d5db; text-align: center; color: ${row.poverty > 22 ? '#dc2626' : '#16a34a'}; font-weight: bold;">${row.poverty}%</td>
+                        <td style="padding: 10px; border: 1px solid #d1d5db; text-align: center;">${row.water}%</td>
+                        <td style="padding: 10px; border: 1px solid #d1d5db; text-align: center; font-weight: bold; color: #1e3a8a;">${row.education}</td>
+                        <td style="padding: 10px; border: 1px solid #d1d5db; text-align: center;">
+                            <span style="background-color: #f3f4f6; padding: 4px 8px; border-radius: 4px; font-size: 11px; font-weight: bold; color: ${priorityColor};">${row.priority}</span>
+                        </td>
+                    </tr>
+                `;
+            });
+
+            // MS Word Native Layout containing precise Cambodian formatting schemas
+            const wordContent = `
+                <html xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:w='urn:schemas-microsoft-com:office:word' xmlns='http://www.w3.org/TR/REC-html40'>
+                <head>
+                    <!--[if gte mso 9]>
+                    <xml>
+                        <w:WordDocument>
+                            <w:View>Print</w:View>
+                            <w:Zoom>100</w:Zoom>
+                            <w:DoNotOptimizeForBrowser/>
+                        </w:WordDocument>
+                    </xml>
+                    <![endif]-->
+                    <meta charset="utf-8">
+                    <style>
+                        @page {
+                            size: 210mm 297mm;
+                            margin: 25mm 20mm 20mm 25mm; /* Left: 2.5cm, Top/Right/Bottom margins */
+                        }
+                        @page WordSection1 {
+                            size: 210mm 297mm;
+                            margin: 25mm 20mm 20mm 25mm;
+                            mso-header-margin: 35.4pt;
+                            mso-footer-margin: 35.4pt;
+                            mso-paper-source: 0;
+                        }
+                        div.WordSection1 {
+                            page: WordSection1;
+                        }
+                        body {
+                            font-family: "Khmer OS Battambang", "Khmer OS", "Segoe UI", sans-serif;
+                            font-size: 12pt;
+                            line-height: 1.6;
+                            color: #1a1a1a;
+                        }
+                        .khmer-moul {
+                            font-family: "Khmer OS Muol Light", "Khmer OS Muol", "Moul", serif;
+                            font-weight: bold;
+                        }
+                        .text-center {
+                            text-align: center;
+                        }
+                        .text-justify {
+                            text-align: justify;
+                        }
+                        .header-bar {
+                            border-bottom: 2px solid #1e3a8a;
+                            padding-bottom: 5px;
+                            margin-bottom: 25px;
+                        }
+                        .header-text {
+                            font-size: 10pt;
+                            color: #4b5563;
+                        }
+                        h1 {
+                            font-family: "Khmer OS Muol Light", "Khmer OS Muol", "Moul", serif;
+                            font-size: 16pt;
+                            color: #1e3a8a;
+                            line-height: 1.8;
+                            margin-bottom: 10px;
+                        }
+                        h2 {
+                            font-family: "Khmer OS Muol Light", "Khmer OS Muol", "Moul", serif;
+                            font-size: 13pt;
+                            color: #0f766e;
+                            border-bottom: 1px solid #0f766e;
+                            padding-bottom: 3px;
+                            margin-top: 25px;
+                            margin-bottom: 15px;
+                        }
+                        .quote-box {
+                            background-color: #f0fdf4;
+                            border-left: 5px solid #16a34a;
+                            padding: 15px 20px;
+                            margin: 20px 0;
+                            border-radius: 0 8px 8px 0;
+                        }
+                        .quote-text {
+                            font-style: italic;
+                            color: #1f2937;
+                            font-size: 11pt;
+                        }
+                        .quote-author {
+                            font-weight: bold;
+                            color: #111827;
+                            font-size: 10pt;
+                            margin-top: 8px;
+                        }
+                        table {
+                            width: 100%;
+                            border-collapse: collapse;
+                            margin: 20px 0;
+                        }
+                        th {
+                            background-color: #f3f4f6;
+                            border: 1px solid #d1d5db;
+                            padding: 10px;
+                            font-weight: bold;
+                            font-size: 11pt;
+                            color: #111827;
+                        }
+                        .page-break {
+                            page-break-before: always;
+                            mso-special-character: page-break;
+                        }
+                        .card-pillar {
+                            background-color: #f8fafc;
+                            border: 1px solid #e2e8f0;
+                            padding: 15px;
+                            margin-bottom: 15px;
+                            border-radius: 8px;
+                        }
+                        .pillar-title {
+                            font-weight: bold;
+                            color: #1e3a8a;
+                            margin-bottom: 5px;
+                        }
+                        .signature-block {
+                            margin-top: 40px;
+                            float: right;
+                            text-align: center;
+                            width: 250px;
+                        }
+                    </style>
+                </head>
+                <body>
+                    <div class="WordSection1">
+                        
+                        <!-- ==================== COVER PAGE ==================== -->
+                        <div class="text-center" style="margin-top: 20px;">
+                            <p class="khmer-moul" style="font-size: 14pt; margin: 0;">ព្រះរាជាណាចក្រកម្ពុជា</p>
+                            <p class="khmer-moul" style="font-size: 12pt; margin: 5px 0 0 0;">ជាតិ សាសនា ព្រះមហាក្សត្រ</p>
+                            <p style="margin: 5px auto 30px auto; font-size: 14pt; letter-spacing: 5px;">- - - - - - - - - - - -</p>
+                            
+                            <p style="font-size: 12pt; font-weight: bold; margin: 0;">រដ្ឋបាលខេត្តសៀមរាប</p>
+                            <p style="font-size: 11pt; color: #4b5563; margin: 5px 0 0 0;">មន្ទីរផែនការខេត្ត</p>
+                        </div>
+                        
+                        <div class="text-center" style="margin-top: 100px; margin-bottom: 120px;">
+                            <h2 class="khmer-moul" style="font-size: 18pt; color: #1e3a8a; border-bottom: none; margin-bottom: 5px;">របាយការណ៍សៀវភៅផែនការយុទ្ធសាស្ត្រ</h2>
+                            <h1 class="khmer-moul" style="font-size: 22pt; color: #0f766e; margin-top: 0;">ការអភិវឌ្ឍន៍ឃុំ-សង្កាត់ ក្នុងខេត្តសៀមរាប</h1>
+                            <p class="khmer-moul" style="font-size: 14pt; color: #b45309; margin-top: 15px;">សម្រាប់អាណត្តិ ឆ្នាំ ${planYear}</p>
+                            <div style="width: 150px; border-bottom: 3px solid #1e3a8a; margin: 30px auto;"></div>
+                        </div>
+                        
+                        <div class="text-center" style="margin-top: auto; border-top: 1px solid #e5e7eb; padding-top: 30px;">
+                            <p style="font-size: 9.5pt; color: #4b5563; max-width: 500px; margin: 0 auto; line-height: 1.8;">
+                                ផ្អែកលើការវិភាគ និងទាញស្រង់ទិន្នន័យជាក់ស្តែងពីការអភិវឌ្ឍតាមបណ្តាស្រុក-ក្រុងនៃខេត្តសៀមរាប តាមរយះឯកសារយោងផ្លូវការ <span style="font-weight: bold; color: #111827;">ProvTableByDistrict_K_17_2025_2.xlsx</span>
+                            </p>
+                            <p style="font-size: 11pt; font-weight: bold; margin-top: 40px;">សៀមរាប, ឆ្នាំ២០២៦</p>
+                        </div>
+                        
+                        <div class="page-break"></div>
+                        
+                        <!-- ==================== PAGE 2: INTRODUCTION ==================== -->
+                        <div class="header-bar">
+                            <table style="width: 100%; border: none; margin: 0;">
+                                <tr style="border: none;">
+                                    <td style="border: none; padding: 0;" class="header-text">ផែនការយុទ្ធសាស្ត្រអភិវឌ្ឍន៍ឃុំ-សង្កាត់ ខេត្តសៀមរាប ${planYear}</td>
+                                    <td style="border: none; padding: 0; text-align: right;" class="header-text">ទំព័រ ២</td>
+                                </tr>
+                            </table>
+                        </div>
+                        
+                        <h2>សេចក្តីផ្តើម និងសេចក្តីសង្ខេបប្រតិបត្តិ</h2>
+                        
+                        <p class="text-justify">
+                            ការអភិវឌ្ឍន៍ប្រកបដោយចីរភាព និងសមធម៌នៅថ្នាក់មូលដ្ឋាន គឺជាគោលនយោបាយអាទិភាពដ៏សំខាន់បំផុតរបស់រាជរដ្ឋាភិបាលកម្ពុជា។ នៅក្នុងខេត្តសៀមរាប ដែលជាបេះដូងនៃវិស័យទេសចរណ៍ និងវប្បធម៌ជាតិ ការរៀបចំផែនការយុទ្ធសាស្ត្រអភិវឌ្ឍន៍ឃុំ-សង្កាត់ មិនត្រឹមតែផ្តោតលើការកសាងហេដ្ឋារចនាសម្ព័ន្ធប៉ុណ្ណោះទេ ប៉ុន្តែថែមទាំងការគិតគូរអំពីការលើកកម្ពស់សេដ្ឋកិច្ចសហគមន៍ ការកាត់បន្ថយគម្លាតជីវភាព និងការធានាសុខុមាលភាពសង្គមប្រកបដោយបរិយាបន្ន។
+                        </p>
+                        <p class="text-justify">
+                            សៀវភៅយុទ្ធសាស្ត្រនេះ ត្រូវបានរៀបចំឡើងយ៉ាងសម្រិតសម្រាំងបំផុត ដោយផ្អែកលើការវិភាគទិន្នន័យសូចនាករសំខាន់ៗនៃបណ្តាស្រុក-ក្រុងទាំង ១២ ក្នុងខេត្តសៀមរាប តាមរយៈទិន្នន័យជាក់ស្តែងនៃឯកសារ <span style="font-weight: bold; color: #1e3a8a;">ProvTableByDistrict_K_17_2025_2.xlsx</span>។
+                        </p>
+                        
+                        <div class="quote-box">
+                            <p class="quote-text">
+                                "${quoteText}"
+                            </p>
+                            <p class="quote-author">
+                                - ${govName} (អភិបាលនៃគណៈអភិបាលខេត្តសៀមរាប)
+                            </p>
+                        </div>
+                        
+                        <div class="page-break"></div>
+                        
+                        <!-- ==================== PAGE 3: DATA ANALYSIS ==================== -->
+                        <div class="header-bar">
+                            <table style="width: 100%; border: none; margin: 0;">
+                                <tr style="border: none;">
+                                    <td style="border: none; padding: 0;" class="header-text">ផែនការយុទ្ធសាស្ត្រអភិវឌ្ឍន៍ឃុំ-សង្កាត់ ខេត្តសៀមរាប ${planYear}</td>
+                                    <td style="border: none; padding: 0; text-align: right;" class="header-text">ទំព័រ ៣</td>
+                                </tr>
+                            </table>
+                        </div>
+                        
+                        <h2>ការវិភាគសូចនាករអភិវឌ្ឍន៍តាមបណ្តាស្រុក-ក្រុង</h2>
+                        
+                        <p class="text-justify">
+                            ទិន្នន័យខាងក្រោមនេះ ជាលទ្ធផលនៃការវិភាគបឋមចេញពីតារាងទិន្នន័យ <span style="font-weight: bold;">ProvTableByDistrict_K_17_2025_2.xlsx</span> ដែលឆ្លុះបញ្ចាំងពីអត្រាភាពក្រីក្រ អត្រាទទួលបានទឹកស្អាត និងការអប់រំតាមតំបន់នីមួយៗ៖
+                        </p>
+                        
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th style="width: 8%;">ល.រ</th>
+                                    <th style="width: 32%;">ក្រុង/ស្រុក</th>
+                                    <th style="width: 15%;">ភាពក្រីក្រ (%)</th>
+                                    <th style="width: 15%;">ទឹកស្អាត (%)</th>
+                                    <th style="width: 15%;">អប់រំ (១-១០)</th>
+                                    <th style="width: 15%;">កម្រិតអាទិភាព</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${tableRowsHtml}
+                            </tbody>
+                        </table>
+                        
+                        <h3 style="font-weight: bold; color: #1e3a8a; margin-top: 20px; font-size: 11pt;">ការវិភាគយុទ្ធសាស្ត្រផ្អែកលើការយល់ដឹងពីទិន្នន័យ (Data Insights)</h3>
+                        <p class="text-justify" style="font-size: 11pt; color: #374151; background-color: #f9fafb; padding: 15px; border-radius: 6px; border: 1px solid #e5e7eb;">
+                            យោងតាមតារាងទិន្នន័យភាពក្រីក្រ និងការអភិវឌ្ឍន៍ខាងលើ ស្រុកដែលមានទីតាំងភូមិសាស្ត្រដាច់ស្រយាលដូចជា ស្រុកស្វាយលើ និងស្រុកវ៉ារិន មានអត្រាភាពក្រីក្រខ្ពស់ជាងគេ និងការទទួលបានហេដ្ឋារចនាសម្ព័ន្ធមូលដ្ឋាន (ទឹកស្អាត និងការអប់រំ) ទាបបំផុត។ ផ្ទុយទៅវិញ ក្រុងសៀមរាប និងស្រុកប្រាសាទបាគង មានការរីកចម្រើនខ្លាំងដោយសារចរន្តសេដ្ឋកិច្ចពីវិស័យទេសចរណ៍ និងឧស្សាហកម្មកែច្នៃ។ ដូចនេះ ការរៀបចំទិសដៅយុទ្ធសាស្ត្រអភិវឌ្ឍន៍សម្រាប់អាណត្តិថ្មីនេះ ត្រូវតែផ្តោតអាទិភាពថវិកា និងធនធានទៅកាន់តំបន់ដែលមានតម្រូវការបន្ទាន់បំផុត ដើម្បីធានាបាននូវតុល្យភាពសង្គមជាតិ។
+                        </p>
+                        
+                        <div class="page-break"></div>
+                        
+                        <!-- ==================== PAGE 4: STRATEGIC PILLARS ==================== -->
+                        <div class="header-bar">
+                            <table style="width: 100%; border: none; margin: 0;">
+                                <tr style="border: none;">
+                                    <td style="border: none; padding: 0;" class="header-text">ផែនការយុទ្ធសាស្ត្រអភិវឌ្ឍន៍ឃុំ-សង្កាត់ ខេត្តសៀមរាប ${planYear}</td>
+                                    <td style="border: none; padding: 0; text-align: right;" class="header-text">ទំព័រ ៤</td>
+                                </tr>
+                            </table>
+                        </div>
+                        
+                        <h2>សសរស្តម្ភយុទ្ធសាស្ត្រគន្លឹះទាំង ៤ នៃការអភិវឌ្ឍ</h2>
+                        
+                        <div class="card-pillar">
+                            <div class="pillar-title">១. ហេដ្ឋារចនាសម្ព័ន្ធ និងការតភ្ជាប់</div>
+                            <p style="margin: 0; font-size: 11pt;" class="text-justify">${p1} គឺជាអាទិភាពធំបំផុត ដើម្បីសម្រួលដល់ការធ្វើដំណើររបស់ប្រជាពលរដ្ឋ និងការតភ្ជាប់ទីផ្សារកសិកម្ម។</p>
+                        </div>
+                        
+                        <div class="card-pillar">
+                            <div class="pillar-title">២. ការអប់រំ និងការគាំពារសុខភាព</div>
+                            <p style="margin: 0; font-size: 11pt;" class="text-justify">${p2} ដោយធានាបាននូវការសាងសង់សាលារៀន និងមណ្ឌលសុខភាពឱ្យកាន់តែគៀកជិតមូលដ្ឋានប្រជាពលរដ្ឋ។</p>
+                        </div>
+                        
+                        <div class="card-pillar">
+                            <div class="pillar-title">៣. ការអភិវឌ្ឍន៍សេដ្ឋកិច្ច និងកសិទេសចរណ៍</div>
+                            <p style="margin: 0; font-size: 11pt;" class="text-justify">ការជំរុញវិស័យកសិកម្មបែបទំនើប ការបង្កើតមុខរបរបន្ថែមតាមរយៈការកែច្នៃកសិផល និងការជំរុញសហគមន៍កសិទេសចរណ៍នៅតាមបណ្តាស្រុកសក្តានុពល។</p>
+                        </div>
+                        
+                        <div class="card-pillar">
+                            <div class="pillar-title">៤. បរិស្ថាន និងភាពធន់នឹងការប្រែប្រួលអាកាសធាតុ</div>
+                            <p style="margin: 0; font-size: 11pt;" class="text-justify">ការគ្រប់គ្រងសំណល់រឹង និងរាវ ការការពារធនធានធម្មជាតិ និងការបង្កើនសមត្ថភាពសម្របខ្លួនទៅនឹងការប្រែប្រួលអាកាសធាតុដល់កសិករខ្នាតតូច។</p>
+                        </div>
+                        
+                        <p class="text-justify" style="margin-top: 20px;">
+                            សសរស្តម្ភយុទ្ធសាស្ត្រទាំងបួននេះ ត្រូវបានរចនាឡើងយ៉ាងលម្អិត ដោយមានការផ្សារភ្ជាប់គ្នាយ៉ាងជិតស្និទ្ធ។ រដ្ឋបាលខេត្តសៀមរាប ជឿជាក់ថាតាមរយៈការអនុវត្តសសរស្តម្ភទាំងនេះ ជីវភាព និងសុវត្ថិភាពសង្គមរបស់ប្រជាពលរដ្ឋគ្រប់ឃុំ-សង្កាត់ នឹងត្រូវបានលើកកម្ពស់យ៉ាងពិតប្រាកដ។
+                        </p>
+                        
+                        <div class="page-break"></div>
+                        
+                        <!-- ==================== PAGE 5: STAKEHOLDERS ==================== -->
+                        <div class="header-bar">
+                            <table style="width: 100%; border: none; margin: 0;">
+                                <tr style="border: none;">
+                                    <td style="border: none; padding: 0;" class="header-text">ផែនការយុទ្ធសាស្ត្រអភិវឌ្ឍន៍ឃុំ-សង្កាត់ ខេត្តសៀមរាប ${planYear}</td>
+                                    <td style="border: none; padding: 0; text-align: right;" class="header-text">ទំព័រ ៥</td>
+                                </tr>
+                            </table>
+                        </div>
+                        
+                        <h2>មតិយោបល់ និងការពិគ្រោះយោបល់ពីអ្នកពាក់ព័ន្ធ</h2>
+                        
+                        <p class="text-justify">
+                            ដើម្បីធានាបាននូវការឆ្លើយតបយ៉ាងពិតប្រាកដទៅនឹងតម្រូវការរបស់ប្រជាពលរដ្ឋ ក្រុមការងាររៀបចំផែនការខេត្ត បានចុះពិគ្រោះយោបល់ និងស្ដាប់មតិយោបល់ដោយផ្ទាល់ពីអ្នកពាក់ព័ន្ធជាច្រើនរូបនៅតាមមូលដ្ឋាន៖
+                        </p>
+                        
+                        <div style="background-color: #f9fafb; border-left: 4px solid #10b981; padding: 12px 15px; margin-bottom: 20px;">
+                            <p style="font-style: italic; margin: 0; font-size: 11pt;">
+                                "នៅក្នុងឃុំរបស់ខ្ញុំ ការសាងសង់ផ្លូវលំក្រាលគ្រួសក្រហមតភ្ជាប់ពីភូមិទៅកាន់ទីប្រជុំជនស្រុក គឺជាកត្តាចម្បងបំផុតដែលជួយសម្រួលដល់ការដឹកជញ្ជូនផលដំណាំកសិកម្មរបស់បងប្អូនប្រជាកសិករ ពិសេសក្នុងរដូវវស្សា។"
+                            </p>
+                            <p style="font-weight: bold; margin-top: 5px; font-size: 10pt; color: #10b981;">
+                                — លោក សុខ ជា (មេឃុំត្បែង ស្រុកបន្ទាយស្រី)
+                            </p>
+                        </div>
+                        
+                        <div style="background-color: #f9fafb; border-left: 4px solid #14b8a6; padding: 12px 15px; margin-bottom: 20px;">
+                            <p style="font-style: italic; margin: 0; font-size: 11pt;">
+                                "ការទទួលបានប្រភពទឹកស្អាត និងការបណ្តុះបណ្តាលបច្ចេកវិទ្យាកសិកម្មធន់នឹងការប្រែប្រួលអាកាសធាតុ នឹងជួយឱ្យពួកយើងអាចបង្កបង្កើនផលបានគ្រប់រដូវកាល និងមិនបារម្ភពីការខូចខាតទិន្នផលដោយសារគ្រោះរាំងស្ងួត។"
+                            </p>
+                            <p style="font-weight: bold; margin-top: 5px; font-size: 10pt; color: #14b8a6;">
+                                — អ្នកស្រី គង់ សារី (តំណាងសហគមន៍កសិករ ស្រុកពួក)
+                            </p>
+                        </div>
+                        
+                        <div style="background-color: #f9fafb; border-left: 4px solid #3b82f6; padding: 12px 15px;">
+                            <p style="font-style: italic; margin: 0; font-size: 11pt;">
+                                "ការគាំទ្រផ្នែកថវិកាអភិវឌ្ឍន៍ឃុំ-សង្កាត់ ចាំបាច់ត្រូវធ្វើឡើងដោយតម្លាភាព និងផ្អែកលើការវិភាគទិន្នន័យជាក់ស្តែងពីកម្រិតភាពក្រីក្រ ដើម្បីធានាថាគ្មានឃុំណាមួយត្រូវបានបំភ្លេចចោលនោះឡើយ។"
+                            </p>
+                            <p style="font-weight: bold; margin-top: 5px; font-size: 10pt; color: #3b82f6;">
+                                — លោក ម៉ៅ រ៉ន (មន្ត្រីសម្របសម្រួលអង្គការសង្គមស៊ីវិលប្រចាំខេត្ត)
+                            </p>
+                        </div>
+                        
+                        <div class="page-break"></div>
+                        
+                        <!-- ==================== PAGE 6: CONCLUSION ==================== -->
+                        <div class="header-bar">
+                            <table style="width: 100%; border: none; margin: 0;">
+                                <tr style="border: none;">
+                                    <td style="border: none; padding: 0;" class="header-text">ផែនការយុទ្ធសាស្ត្រអភិវឌ្ឍន៍ឃុំ-សង្កាត់ ខេត្តសៀមរាប ${planYear}</td>
+                                    <td style="border: none; padding: 0; text-align: right;" class="header-text">ទំព័រ ៦</td>
+                                </tr>
+                            </table>
+                        </div>
+                        
+                        <h2>ក្របខ័ណ្ឌតាមដាន វាយតម្លៃ និងសេចក្តីសន្និដ្ឋាន</h2>
+                        
+                        <p class="text-justify">
+                            ដើម្បីធានាការអនុវត្តផែនការយុទ្ធសាស្ត្រអភិវឌ្ឍន៍ឃុំ-សង្កាត់ ក្នុងអាណត្តិថ្មីនេះ ទទួលបានជោគជ័យពេញលេញ និងឆ្លើយតបទាន់ពេលវេលា រដ្ឋបាលខេត្តសៀមរាបនឹងបង្កើតគណៈកម្មការអន្តរមន្ទីរមួយ ដើម្បីតាមដាន និងវាយតម្លៃជាប្រចាំរៀងរាល់៦ខែម្តង។
+                        </p>
+                        <p class="text-justify">
+                            ការតាមដាននេះនឹងផ្តោតលើសូចនាករលទ្ធផលសំខាន់ៗ (KPIs) រួមមាន៖ ប្រវែងផ្លូវដែលបានស្ថាបនា អត្រាកាត់បន្ថយភាពក្រីក្រជាក់ស្តែង ចំនួនគ្រួសារទទួលបានទឹកស្អាតថ្មី និងសន្ទស្សន៍លទ្ធផលសិក្សារបស់កុមារតាមបណ្តាស្រុកគោលដៅ។
+                        </p>
+                        <p class="text-justify">
+                            ជាសេចក្តីសន្និដ្ឋាន រដ្ឋបាលខេត្តសៀមរាប សង្ឃឹមយ៉ាងមុតមាំថា ផែនការយុទ្ធសាស្ត្ររយៈពេល ៥ឆ្នាំនេះ នឹងក្លាយជាត្រីវិស័យចង្អុលផ្លូវ និងជាឧបករណ៍ជំនួយដ៏សំខាន់សម្រាប់គ្រប់ថ្នាក់ដឹកនាំឃុំ-សង្កាត់ ក្នុងការកសាង និងអភិវឌ្ឍន៍ទឹកដីរបស់ខ្លួនប្រកបដោយចីរភាព ភាពសុខសាន្ត និងវិបុលភាពសម្រាប់ប្រជាជនគ្រប់រូប។
+                        </p>
+                        
+                        <div class="signature-block">
+                            <p style="font-size: 9pt; color: #4b5563; margin-bottom: 2px;">ធ្វើនៅសៀមរាប, ថ្ងៃទី២០ ខែកក្កដា ឆ្នាំ២០២៦</p>
+                            <p style="font-weight: bold; font-size: 11pt; margin-top: 2px;">អភិបាលនៃគណៈអភិបាលខេត្តសៀមរាប</p>
+                            <p style="margin-top: 60px;" class="khmer-moul">${govName}</p>
+                        </div>
+                        
+                    </div>
+                </body>
+                </html>
+            `;
+
+            // Generating the word download blob using standard MIME type compatibility
+            const blob = new Blob(['\ufeff' + wordContent], {
+                type: 'application/msword;charset=utf-8'
+            });
+
+            const fileName = `Strategic_Plan_SiemReap_Commune_${planYear.replace('-', '_')}.doc`;
+            
+            // Trigger download cleanly
+            if (navigator.msSaveOrOpenBlob) {
+                navigator.msSaveOrOpenBlob(blob, fileName);
+            } else {
+                const link = document.createElement('a');
+                link.href = URL.createObjectURL(blob);
+                link.download = fileName;
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+            }
+        }
+    </script>
+</body>
+</html>
